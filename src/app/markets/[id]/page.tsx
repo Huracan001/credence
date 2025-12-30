@@ -1,9 +1,8 @@
-import { notFound } from "next/navigation";
 import { ChangeIndicator } from "@/components/ChangeIndicator";
 import { InsightSections } from "@/components/InsightSections";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
-import { getMarketSnapshotById } from "@/lib/server/markets";
+import { getMarketSnapshotById, refreshMarkets } from "@/lib/server/markets";
 import { getLatestBeliefShift, getLatestInsight } from "@/lib/persistence/store";
 import { generateGuardedInsight } from "@/lib/insightGenerator";
 
@@ -20,10 +19,25 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
 }
 
 export default async function MarketDetail({ params }: Props) {
-  const market = await getMarketSnapshotById(params.id);
+  let market = await getMarketSnapshotById(params.id);
 
   if (!market) {
-    return notFound();
+    // Fallback: force a refresh if cache missed a newly fetched market
+    const fresh = await refreshMarkets();
+    market = fresh.markets.find((m) => m.id === params.id) ?? null;
+  }
+
+  if (!market) {
+    return (
+      <div className="glass-panel p-6 text-slate-100">
+        <h1 className="text-2xl font-semibold text-white">Market unavailable</h1>
+        <p className="mt-2 text-sm text-slate-200">
+          We could not load this market. It may have been delisted or is temporarily
+          unavailable from the data provider. Please return to the dashboard and try a
+          different market.
+        </p>
+      </div>
+    );
   }
 
   const latestShift = await getLatestBeliefShift(market.id);
