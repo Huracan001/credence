@@ -34,6 +34,15 @@ export async function getMarketsSnapshot(): Promise<MarketsResponse> {
 
 export async function getMarketSnapshotById(id: string): Promise<Market | null> {
   const snapshot = await getMarketsSnapshot();
-  return snapshot.markets.find((m) => m.id === id) ?? null;
+  const found = snapshot.markets.find((m) => m.id === id);
+  if (found) return found;
+
+  // Fallback: force refresh once if not present (handles new markets / cache misses)
+  try {
+    const fresh = await refreshMarkets();
+    return fresh.markets.find((m) => m.id === id) ?? null;
+  } catch {
+    return null;
+  }
 }
 
