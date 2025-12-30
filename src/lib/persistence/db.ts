@@ -1,0 +1,97 @@
+import path from "path";
+import { promises as fs } from "fs";
+import initSqlJs, { Database, SqlJsStatic } from "sql.js";
+
+let sqlPromise: Promise<SqlJsStatic> | null = null;
+let dbPromise: Promise<Database> | null = null;
+
+const DB_DIR = path.join(process.cwd(), "data");
+const DB_PATH = path.join(DB_DIR, "credence.db");
+
+async function loadSqlJs() {
+  if (!sqlPromise) {
+    sqlPromise = initSqlJs({
+      locateFile: (file) =>
+        path.join(process.cwd(), "node_modules", "sql.js", "dist", file),
+    });
+  }
+  return sqlPromise;
+}
+
+async function ensureDir() {
+  await fs.mkdir(DB_DIR, { recursive: true });
+}
+
+async function loadDatabase() {
+  const SQL = await loadSqlJs();
+  await ensureDir();
+  try {
+    const fileBuffer = await fs.readFile(DB_PATH);
+    return new SQL.Database(fileBuffer);
+  } catch {
+    return new SQL.Database();
+  }
+}
+
+function applySchema(db: Database) {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS markets (
+      id TEXT PRIMARY KEY,
+      question TEXT NOT NULL,
+      probability REAL NOT NULL,
+      volume REAL,
+      updatedAt TEXT NOT NULL
+    );
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS belief_shifts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      marketId TEXT NOT NULL,
+      previousProbability REAL NOT NULL,
+      currentProbability REAL NOT NULL,
+      delta REAL NOT NULL,
+      detectedAt TEXT NOT NULL,
+      UNIQUE(marketId, detectedAt)
+    );
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS insights (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      marketId TEXT NOT NULL,
+      shiftDetectedAt TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      whatChanged TEXT NOT NULL,
+      whyMoved TEXT NOT NULL,
+      uncertainty TEXT NOT NULL,
+      interpretation TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      UNIQUE(marketId, shiftDetectedAt)
+    );
+  `);
+}
+
+async function persist(db: Database) {
+  const data = db.export();
+  const buffer = Buffer.from(data);
+  await fs.writeFile(DB_PATH, buffer);
+}
+
+export async function getDb(): Promise<Database> {
+  if (!dbPromise) {
+    dbPromise = (async () => {
+      const db = await loadDatabase();
+      applySchema(db);
+      await persist(db);
+      return db;
+    })();
+  }
+  return dbPromise;
+}
+
+export async function withDb<T>(fn: (db: Database) => T | Promise<T>): Promise<T> {
+  const db = await getDb();
+  const result = await fn(db);
+  await persist(db);
+  return result;
+}
+
