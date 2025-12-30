@@ -3,9 +3,11 @@ import { ChangeIndicator } from "@/components/ChangeIndicator";
 import { InsightSections } from "@/components/InsightSections";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
-import { getMarketSnapshotById, getMarketsSnapshot } from "@/lib/server/markets";
+import { getMarketSnapshotById } from "@/lib/server/markets";
 import { getLatestBeliefShift, getLatestInsight } from "@/lib/persistence/store";
 import { generateGuardedInsight } from "@/lib/insightGenerator";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: { id: string };
@@ -15,11 +17,6 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
   if (volume >= 5_000_000) return "high";
   if (volume >= 1_000_000) return "medium";
   return "low";
-}
-
-export async function generateStaticParams() {
-  const snapshot = await getMarketsSnapshot();
-  return snapshot.markets.map((market) => ({ id: market.id }));
 }
 
 export default async function MarketDetail({ params }: Props) {
