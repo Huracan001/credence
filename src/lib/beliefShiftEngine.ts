@@ -30,11 +30,11 @@ export async function detectBeliefShifts(
     const previousProbability =
       storedMarket?.probability ?? latestShift?.currentProbability ?? market.probability;
 
-    const previousVolume = storedMarket?.volume ?? 0;
+    const previousVolume24h = storedMarket?.volume ?? 0; // treat stored volume as last 24h snapshot
     const delta = market.probability - previousProbability;
     const absDelta = Math.abs(delta);
     const volumeSpike =
-      previousVolume > 0 ? market.volume > previousVolume * 2 : false;
+      previousVolume24h > 0 ? market.volume > previousVolume24h * 2 : false;
 
     const shouldTrigger = absDelta >= threshold || volumeSpike;
 
