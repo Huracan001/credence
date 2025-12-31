@@ -8,6 +8,9 @@ export type Market = {
   bestAsk?: number | null;
   volume24h?: number | null;
   lastPrice?: number | null;
+  assetId?: string | null; // CoinGecko id if detected
+  priceUsd?: number | null;
+  priceChange24h?: number | null;
   displayProbability?: number; // 0-1 after clamping for UI
   probabilityLabel?: string;
   confidenceScore?: number;

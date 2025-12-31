@@ -1,6 +1,7 @@
 import { detectBeliefShifts } from "@/lib/beliefShiftEngine";
 import { getFromCache, setCache } from "@/lib/cache";
 import { fetchPolymarketMarkets } from "@/lib/providers/polymarket";
+import { fetchCoinPrices } from "@/lib/providers/coingecko";
 import {
   listBeliefShifts,
   getMarkets,
@@ -21,6 +22,20 @@ import {
 
 const CACHE_KEY = "markets-latest";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function detectAssetId(question: string): string | null {
+  const q = question.toLowerCase();
+  if (q.includes("bitcoin") || q.includes("btc")) return "bitcoin";
+  if (q.includes("ethereum") || q.includes("eth")) return "ethereum";
+  if (q.includes("solana") || q.includes("sol")) return "solana";
+  if (q.includes("tether") || q.includes("usdt")) return "tether";
+  if (q.includes("usd") && q.includes("coin")) return "usd-coin";
+  if (q.includes("cardano") || q.includes("ada")) return "cardano";
+  if (q.includes("xrp")) return "ripple";
+  if (q.includes("doge")) return "dogecoin";
+  if (q.includes("bnb")) return "binancecoin";
+  return null;
+}
 
 function maybeInjectDemoShift(response: MarketsResponse): MarketsResponse {
   if (process.env.DEMO_SHIFTS !== "true") return response;
@@ -43,10 +58,20 @@ function maybeInjectDemoShift(response: MarketsResponse): MarketsResponse {
 }
 
 export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
+  const assetIds = new Set<string>();
+  markets.forEach((m) => {
+    const id = detectAssetId(m.question);
+    if (id) assetIds.add(id);
+  });
+  const coinPrices = await fetchCoinPrices(Array.from(assetIds));
+
   const liquidityPercentiles = computeLiquidityPercentiles(markets);
 
   const enriched = await Promise.all(
     markets.map(async (market) => {
+      const assetId = detectAssetId(market.question);
+      const priceInfo = assetId ? coinPrices[assetId] : undefined;
+
       const now = new Date();
       const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       const cutoff7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -89,6 +114,9 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
 
       return {
         ...market,
+        assetId,
+        priceUsd: priceInfo?.priceUsd ?? null,
+        priceChange24h: priceInfo?.change24h ?? null,
         displayProbability,
         probabilityLabel: marketLabel,
         confidenceScore,
