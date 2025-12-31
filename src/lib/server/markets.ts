@@ -174,11 +174,12 @@ export async function getMarketsSnapshot(): Promise<MarketsResponse> {
 }
 
 export async function getMarketSnapshotById(id: string): Promise<Market | null> {
+  // Try cached snapshot first
   const snapshot = await getMarketsSnapshot();
   const found = snapshot.markets.find((m) => m.id === id);
   if (found) return found;
 
-  // Fallback: force refresh once if not present (handles new markets / cache misses)
+  // Force a refresh (bypass cache) to handle cache misses
   try {
     const fresh = await refreshMarkets();
     const refreshed = fresh.markets.find((m) => m.id === id);
@@ -187,22 +188,22 @@ export async function getMarketSnapshotById(id: string): Promise<Market | null> 
     console.error("[getMarketSnapshotById] refresh failed", err);
   }
 
-  // Last resort: check persisted markets
-  try {
-    const persisted = await getMarkets();
-    const fromDb = persisted.find((m) => m.id === id);
-    if (fromDb) return fromDb;
-  } catch (err) {
-    console.error("[getMarketSnapshotById] persistence fallback failed", err);
-  }
-
-  // Direct fetch as a final attempt (uncached)
+  // Last resort: direct provider fetch + enrich (no cache) to avoid stale state
   try {
     const direct = await fetchPolymarketMarkets();
     const enriched = await enrichMarkets(direct);
-    return enriched.find((m) => m.id === id) ?? null;
+    const live = enriched.find((m) => m.id === id);
+    if (live) return live;
   } catch (err) {
     console.error("[getMarketSnapshotById] direct fetch failed", err);
+  }
+
+  // Persisted fallback if provider is unreachable
+  try {
+    const persisted = await getMarkets();
+    return persisted.find((m) => m.id === id) ?? null;
+  } catch (err) {
+    console.error("[getMarketSnapshotById] persistence fallback failed", err);
     return null;
   }
 }
