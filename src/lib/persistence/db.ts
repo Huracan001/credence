@@ -5,8 +5,13 @@ import initSqlJs, { Database, SqlJsStatic } from "sql.js";
 let sqlPromise: Promise<SqlJsStatic> | null = null;
 let dbPromise: Promise<Database> | null = null;
 
-const DB_DIR = path.join(process.cwd(), "data");
+// Vercel's serverless file system is read-only except /tmp. Allow an override
+// and default to /tmp when running on Vercel so persistence does not throw.
+const DB_DIR =
+  process.env.CREDENCE_DB_DIR ??
+  (process.env.VERCEL ? path.join("/tmp", "credence-data") : path.join(process.cwd(), "data"));
 const DB_PATH = path.join(DB_DIR, "credence.db");
+let persistEnabled = true;
 
 async function loadSqlJs() {
   if (!sqlPromise) {
@@ -19,18 +24,26 @@ async function loadSqlJs() {
 }
 
 async function ensureDir() {
-  await fs.mkdir(DB_DIR, { recursive: true });
+  try {
+    await fs.mkdir(DB_DIR, { recursive: true });
+  } catch (err) {
+    persistEnabled = false;
+    console.warn("[db] could not create DB directory, running in memory only", err);
+  }
 }
 
 async function loadDatabase() {
   const SQL = await loadSqlJs();
   await ensureDir();
-  try {
-    const fileBuffer = await fs.readFile(DB_PATH);
-    return new SQL.Database(fileBuffer);
-  } catch {
-    return new SQL.Database();
+  if (persistEnabled) {
+    try {
+      const fileBuffer = await fs.readFile(DB_PATH);
+      return new SQL.Database(fileBuffer);
+    } catch {
+      // No persisted DB yet; fall through to a fresh instance.
+    }
   }
+  return new SQL.Database();
 }
 
 function applySchema(db: Database) {
@@ -71,9 +84,15 @@ function applySchema(db: Database) {
 }
 
 async function persist(db: Database) {
-  const data = db.export();
-  const buffer = Buffer.from(data);
-  await fs.writeFile(DB_PATH, buffer);
+  if (!persistEnabled) return; // Skip when file system is not writable.
+  try {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    await fs.writeFile(DB_PATH, buffer);
+  } catch (err) {
+    persistEnabled = false;
+    console.warn("[db] persistence disabled after write failure; continuing in memory", err);
+  }
 }
 
 export async function getDb(): Promise<Database> {
