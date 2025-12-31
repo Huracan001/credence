@@ -19,10 +19,14 @@ export default async function Home() {
   const shifts: BeliefShiftDisplay[] = snapshot.shifts
     .map((shift) => {
       const market = snapshot.markets.find((m) => m.id === shift.marketId);
+      const confidence: BeliefShiftDisplay["confidence"] = market
+        ? confidenceFromVolume(market.volume)
+        : "medium";
+
       return {
         ...shift,
         question: market?.question ?? "Market",
-        confidence: "medium",
+        confidence,
         volume: market?.volume ?? 0,
       };
     })

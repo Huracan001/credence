@@ -7,13 +7,19 @@ const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 export default async function MarketsPage() {
   const snapshot = await getMarketsSnapshot();
   const hasMarkets = snapshot.markets.length > 0;
+  const confidenceFromVolume = (volume: number): BeliefShiftDisplay["confidence"] => {
+    if (volume >= 5_000_000) return "high";
+    if (volume >= 1_000_000) return "medium";
+    return "low";
+  };
   const shiftDisplays: BeliefShiftDisplay[] = snapshot.shifts
     .map((shift) => {
       const market = snapshot.markets.find((m) => m.id === shift.marketId);
+      const confidence = market ? confidenceFromVolume(market.volume) : "medium";
       return {
         ...shift,
         question: market?.question ?? "Market",
-        confidence: "medium",
+        confidence,
         volume: market?.volume ?? 0,
       };
     })
