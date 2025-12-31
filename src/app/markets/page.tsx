@@ -2,17 +2,22 @@ import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFee
 import { MarketTable } from "@/components/MarketTable";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
+const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
+
 export default async function MarketsPage() {
   const snapshot = await getMarketsSnapshot();
   const hasMarkets = snapshot.markets.length > 0;
-  const shiftDisplays: BeliefShiftDisplay[] = snapshot.shifts.map((shift) => {
-    const market = snapshot.markets.find((m) => m.id === shift.marketId);
-    return {
-      ...shift,
-      question: market?.question ?? "Market",
-      confidence: "medium",
-    };
-  });
+  const shiftDisplays: BeliefShiftDisplay[] = snapshot.shifts
+    .map((shift) => {
+      const market = snapshot.markets.find((m) => m.id === shift.marketId);
+      return {
+        ...shift,
+        question: market?.question ?? "Market",
+        confidence: "medium",
+        volume: market?.volume ?? 0,
+      };
+    })
+    .filter((shift) => shift.volume !== undefined && shift.volume >= MIN_LIQUIDITY_FOR_SHIFTS);
 
   return (
     <div className="space-y-8">

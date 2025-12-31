@@ -4,6 +4,8 @@ import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
+const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
+
 function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
   if (volume >= 5_000_000) return "high";
   if (volume >= 1_000_000) return "medium";
@@ -14,14 +16,17 @@ export default async function Home() {
   const snapshot = await getMarketsSnapshot();
   const featuredMarkets = snapshot.markets.slice(0, 3);
   const hasMarkets = snapshot.markets.length > 0;
-  const shifts: BeliefShiftDisplay[] = snapshot.shifts.map((shift) => {
-    const market = snapshot.markets.find((m) => m.id === shift.marketId);
-    return {
-      ...shift,
-      question: market?.question ?? "Market",
-      confidence: "medium",
-    };
-  });
+  const shifts: BeliefShiftDisplay[] = snapshot.shifts
+    .map((shift) => {
+      const market = snapshot.markets.find((m) => m.id === shift.marketId);
+      return {
+        ...shift,
+        question: market?.question ?? "Market",
+        confidence: "medium",
+        volume: market?.volume ?? 0,
+      };
+    })
+    .filter((shift) => shift.volume !== undefined && shift.volume >= MIN_LIQUIDITY_FOR_SHIFTS);
 
   return (
     <div className="space-y-10">
