@@ -42,7 +42,7 @@ function maybeInjectDemoShift(response: MarketsResponse): MarketsResponse {
   };
 }
 
-async function enrichMarkets(markets: Market[]): Promise<Market[]> {
+export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
   const liquidityPercentiles = computeLiquidityPercentiles(markets);
 
   const enriched = await Promise.all(
@@ -162,9 +162,19 @@ export async function getMarketSnapshotById(id: string): Promise<Market | null> 
   // Last resort: check persisted markets
   try {
     const persisted = await getMarkets();
-    return persisted.find((m) => m.id === id) ?? null;
+    const fromDb = persisted.find((m) => m.id === id);
+    if (fromDb) return fromDb;
   } catch (err) {
     console.error("[getMarketSnapshotById] persistence fallback failed", err);
+  }
+
+  // Direct fetch as a final attempt (uncached)
+  try {
+    const direct = await fetchPolymarketMarkets();
+    const enriched = await enrichMarkets(direct);
+    return enriched.find((m) => m.id === id) ?? null;
+  } catch (err) {
+    console.error("[getMarketSnapshotById] direct fetch failed", err);
     return null;
   }
 }
