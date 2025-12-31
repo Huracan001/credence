@@ -6,7 +6,7 @@ import {
   upsertMarkets,
 } from "./persistence/store";
 
-const DEFAULT_THRESHOLD = 0.08; // 8 percentage points in probability space
+const DEFAULT_THRESHOLD = 0.03; // 3 percentage points in probability space
 
 type DetectOptions = {
   threshold?: number;
