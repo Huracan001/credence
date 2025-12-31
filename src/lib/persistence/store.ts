@@ -148,6 +148,67 @@ export async function listBeliefShifts(limit = 20): Promise<BeliefShift[]> {
   });
 }
 
+export async function listBeliefShiftsForMarket(
+  marketId: string,
+  sinceIso?: string,
+  limit = 100,
+): Promise<BeliefShift[]> {
+  return withDb((db) => {
+    const stmt = sinceIso
+      ? db.prepare(
+          `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+           FROM belief_shifts
+           WHERE marketId = ? AND datetime(detectedAt) >= datetime(?)
+           ORDER BY datetime(detectedAt) DESC
+           LIMIT ?`,
+        )
+      : db.prepare(
+          `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+           FROM belief_shifts
+           WHERE marketId = ?
+           ORDER BY datetime(detectedAt) DESC
+           LIMIT ?`,
+        );
+
+    if (sinceIso) {
+      stmt.bind([marketId, sinceIso, limit]);
+    } else {
+      stmt.bind([marketId, limit]);
+    }
+
+    const rows: BeliefShift[] = [];
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject() as BeliefShift);
+    }
+    stmt.free();
+    return rows;
+  });
+}
+
+export async function getHistoricalProbability(
+  marketId: string,
+  cutoffIso: string,
+): Promise<number | null> {
+  return withDb((db) => {
+    const stmt = db.prepare(
+      `SELECT currentProbability
+       FROM belief_shifts
+       WHERE marketId = ? AND datetime(detectedAt) <= datetime(?)
+       ORDER BY datetime(detectedAt) DESC
+       LIMIT 1`,
+    );
+    stmt.bind([marketId, cutoffIso]);
+    const hasResult = stmt.step();
+    if (!hasResult) {
+      stmt.free();
+      return null;
+    }
+    const row = stmt.getAsObject() as { currentProbability: number };
+    stmt.free();
+    return row.currentProbability ?? null;
+  });
+}
+
 export async function saveInsight(insight: StoredInsight): Promise<void> {
   return withDb((db) => {
     const stmt = db.prepare(

@@ -4,6 +4,21 @@ export type Market = {
   probability: number; // 0-1
   volume: number; // in USD if available
   updatedAt: string; // ISO string
+  bestBid?: number | null;
+  bestAsk?: number | null;
+  volume24h?: number | null;
+  lastPrice?: number | null;
+  displayProbability?: number; // 0-1 after clamping for UI
+  probabilityLabel?: string;
+  confidenceScore?: number;
+  confidenceLabel?: "low" | "medium" | "high";
+  confidenceExplanation?: string;
+  liquidityPercentile?: number;
+  delta24h?: number | null;
+  delta7d?: number | null;
+  meaningfulMove?: boolean;
+  liquidityBar?: string;
+  explanationContext?: ExplanationContext;
 };
 
 export type BeliefShift = {
@@ -29,5 +44,17 @@ export type StoredInsight = {
 export type MarketsResponse = {
   markets: Market[];
   shifts: BeliefShift[];
+};
+
+export type ExplanationContext = {
+  eventTitle: string;
+  currentProbability: number;
+  probabilityChange24h: number | null;
+  liquidity: number;
+  liquidityChange: number | null;
+  confidenceScore: number | null;
+  timeToExpiry: number | null;
+  tradeActivitySummary: string | null;
+  liquidityPercentile?: number | null;
 };
 

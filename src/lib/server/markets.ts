@@ -1,8 +1,23 @@
 import { detectBeliefShifts } from "@/lib/beliefShiftEngine";
 import { getFromCache, setCache } from "@/lib/cache";
 import { fetchPolymarketMarkets } from "@/lib/providers/polymarket";
-import { listBeliefShifts, getMarkets } from "@/lib/persistence/store";
+import {
+  listBeliefShifts,
+  getMarkets,
+  getHistoricalProbability,
+  listBeliefShiftsForMarket,
+} from "@/lib/persistence/store";
 import { MarketsResponse, Market, BeliefShift } from "@/types";
+import {
+  buildExplanationContext,
+  clampDisplayProbability,
+  computeConfidence,
+  computeDeltas,
+  computeLiquidityPercentiles,
+  computeVolatility,
+  formatLiquidityBar,
+  probabilityLabel,
+} from "@/lib/metrics";
 
 const CACHE_KEY = "markets-latest";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -27,11 +42,86 @@ function maybeInjectDemoShift(response: MarketsResponse): MarketsResponse {
   };
 }
 
+async function enrichMarkets(markets: Market[]): Promise<Market[]> {
+  const liquidityPercentiles = computeLiquidityPercentiles(markets);
+
+  const enriched = await Promise.all(
+    markets.map(async (market) => {
+      const now = new Date();
+      const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const cutoff7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const [prior24h, prior7d, shifts7d] = await Promise.all([
+        getHistoricalProbability(market.id, cutoff24h),
+        getHistoricalProbability(market.id, cutoff7d),
+        listBeliefShiftsForMarket(market.id, cutoff7d, 200),
+      ]);
+
+      const { delta24h, delta7d, meaningful } = computeDeltas(
+        market.probability,
+        prior24h,
+        prior7d,
+      );
+      const volatility = computeVolatility(shifts7d, market.probability);
+      const tradeFrequency24h = shifts7d.filter((s) => s.detectedAt >= cutoff24h).length;
+
+      const spread =
+        market.bestBid !== undefined &&
+        market.bestBid !== null &&
+        market.bestAsk !== undefined &&
+        market.bestAsk !== null
+          ? market.bestAsk - market.bestBid
+          : null;
+
+      const { score: confidenceScore, label: confidenceLabel, explanation } = computeConfidence({
+        liquidity: market.volume,
+        spread,
+        volume24h: market.volume24h ?? null,
+        volatility,
+        tradeFrequency24h,
+        updatedAt: market.updatedAt,
+      });
+
+      const displayProbability = clampDisplayProbability(market.probability);
+      const marketLabel = probabilityLabel(displayProbability);
+      const liquidityPercentile = liquidityPercentiles.get(market.id) ?? 0;
+      const liquidityBar = formatLiquidityBar(liquidityPercentile);
+
+      return {
+        ...market,
+        displayProbability,
+        probabilityLabel: marketLabel,
+        confidenceScore,
+        confidenceLabel,
+        confidenceExplanation: explanation,
+        liquidityPercentile,
+        liquidityBar,
+        delta24h,
+        delta7d,
+        meaningfulMove: meaningful,
+        explanationContext: buildExplanationContext({
+          market,
+          probabilityChange24h: delta24h,
+          liquidityPercentile,
+          confidenceScore,
+          timeToExpiry: null,
+          tradeActivitySummary: `Recent trades: ${tradeFrequency24h} shifts in 24h; volatility ${
+            volatility !== null ? (volatility * 100).toFixed(1) : "n/a"
+          } pts`,
+        }),
+      };
+    }),
+  );
+
+  return enriched;
+}
+
 export async function refreshMarkets(): Promise<MarketsResponse> {
   const data = await fetchPolymarketMarkets();
   const shifts = await detectBeliefShifts(data);
+  const enriched = await enrichMarkets(data);
 
-  const response: MarketsResponse = { markets: data, shifts };
+  const response: MarketsResponse = { markets: enriched, shifts };
   const withDemo = maybeInjectDemoShift(response);
   setCache(CACHE_KEY, withDemo, CACHE_TTL_MS);
   return withDemo;
@@ -47,7 +137,8 @@ export async function getMarketsSnapshot(): Promise<MarketsResponse> {
     console.error("[markets] refresh failed, using persisted data", err);
     const markets = await getMarkets();
     const shifts = await listBeliefShifts(10);
-    const fallback: MarketsResponse = { markets, shifts };
+    const enriched = await enrichMarkets(markets);
+    const fallback: MarketsResponse = { markets: enriched, shifts };
     const withDemo = maybeInjectDemoShift(fallback);
     setCache(CACHE_KEY, withDemo, CACHE_TTL_MS);
     return withDemo;
@@ -62,8 +153,18 @@ export async function getMarketSnapshotById(id: string): Promise<Market | null> 
   // Fallback: force refresh once if not present (handles new markets / cache misses)
   try {
     const fresh = await refreshMarkets();
-    return fresh.markets.find((m) => m.id === id) ?? null;
-  } catch {
+    const refreshed = fresh.markets.find((m) => m.id === id);
+    if (refreshed) return refreshed;
+  } catch (err) {
+    console.error("[getMarketSnapshotById] refresh failed", err);
+  }
+
+  // Last resort: check persisted markets
+  try {
+    const persisted = await getMarkets();
+    return persisted.find((m) => m.id === id) ?? null;
+  } catch (err) {
+    console.error("[getMarketSnapshotById] persistence fallback failed", err);
     return null;
   }
 }

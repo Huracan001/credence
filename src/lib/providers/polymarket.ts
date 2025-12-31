@@ -18,6 +18,7 @@ type PolymarketMarket = {
   openInterest?: number | string;
   created_at?: string;
   updated_at?: string;
+  endDate?: string;
 };
 
 const fallbackMarkets: Market[] = [
@@ -66,18 +67,26 @@ function normalizeMarket(raw: PolymarketMarket): Market | null {
   if (probability === null) return null;
 
   const question = raw.question ?? raw.title ?? "Untitled market";
+  const volume24h = toNumber(raw.volume24h);
   const volume =
-    toNumber(raw.volume24h) ??
+    volume24h ??
     toNumber(raw.openInterest) ??
     toNumber(raw.liquidity) ??
     0;
   const updatedAt = raw.updated_at ?? raw.created_at ?? new Date().toISOString();
+  const bestBid = toNumber(raw.bestBid);
+  const bestAsk = toNumber(raw.bestAsk);
+  const lastPrice = toNumber(raw.lastPrice);
 
   return {
     id: raw.id ?? question.toLowerCase().replace(/\s+/g, "-").slice(0, 40),
     question,
     probability,
     volume: volume ?? 0,
+    volume24h: volume24h ?? null,
+    bestBid,
+    bestAsk,
+    lastPrice,
     updatedAt,
   };
 }

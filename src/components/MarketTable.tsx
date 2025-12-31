@@ -40,9 +40,12 @@ export function MarketTable({ markets, shifts = [] }: Props) {
             <div className="space-y-3">
               <Link
                 href={`/markets/${market.id}`}
-                className="text-base font-semibold text-white hover:text-sky-200"
+                className="group flex items-center gap-2 text-base font-semibold text-white hover:text-sky-200"
               >
                 {market.question}
+                <span className="text-xs text-sky-300 opacity-0 transition group-hover:opacity-100">
+                  Explain →
+                </span>
               </Link>
               <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                 <span className="rounded-full bg-slate-800/70 px-2 py-1 uppercase tracking-wide">
@@ -54,15 +57,37 @@ export function MarketTable({ markets, shifts = [] }: Props) {
             <div className="space-y-3">
               <ProbabilityBadge
                 probability={market.probability}
-                confidence={confidenceFromVolume(market.volume)}
+                displayProbability={market.displayProbability}
+                probabilityLabel={market.probabilityLabel}
+                confidence={
+                  market.confidenceLabel ?? confidenceFromVolume(market.volume)
+                }
               />
               <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                <ChangeIndicator
-                  value={shiftMap.get(market.id)?.delta ?? 0}
-                  label="latest shift"
-                />
-                <span className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200">
-                  Liquidity: ~${Math.round(market.volume).toLocaleString()}
+                {market.delta24h !== null && market.delta24h !== undefined ? (
+                  <ChangeIndicator value={market.delta24h} label="24h" emphasize />
+                ) : null}
+                {market.delta7d !== null && market.delta7d !== undefined ? (
+                  <ChangeIndicator value={market.delta7d} label="7d" emphasize />
+                ) : null}
+                {(market.delta24h === null || market.delta24h === undefined) &&
+                (market.delta7d === null || market.delta7d === undefined) ? (
+                  <ChangeIndicator
+                    value={shiftMap.get(market.id)?.delta ?? 0}
+                    label="latest shift"
+                  />
+                ) : null}
+                <span
+                  className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200"
+                  title={`Confidence score: ${market.confidenceScore ?? "n/a"} • ${market.confidenceExplanation ?? ""}`}
+                >
+                  {market.confidenceLabel ?? confidenceFromVolume(market.volume)} confidence
+                </span>
+                <span
+                  className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200"
+                  title={`Liquidity percentile: ${market.liquidityPercentile ?? 0}%`}
+                >
+                  {market.liquidityBar ?? "██░░░"} ${Math.round(market.volume).toLocaleString()}
                 </span>
               </div>
             </div>

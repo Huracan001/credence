@@ -67,10 +67,18 @@ export default async function MarketDetail({ params }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <ProbabilityBadge
               probability={market.probability}
-              confidence={confidenceFromVolume(market.volume)}
+              displayProbability={market.displayProbability}
+              probabilityLabel={market.probabilityLabel}
+              confidence={
+                market.confidenceLabel ?? confidenceFromVolume(market.volume)
+              }
             />
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-              <ChangeIndicator value={latestShift?.delta ?? 0} label="latest shift" />
+              {market.delta24h !== null && market.delta24h !== undefined ? (
+                <ChangeIndicator value={market.delta24h} label="24h" emphasize />
+              ) : (
+                <ChangeIndicator value={latestShift?.delta ?? 0} label="latest shift" />
+              )}
               <span className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200">
                 Liquidity: ~${Math.round(market.volume).toLocaleString()}
               </span>
@@ -101,10 +109,11 @@ export default async function MarketDetail({ params }: Props) {
             <p className="text-xs uppercase tracking-wide text-slate-300">
               Confidence descriptor
             </p>
-            <p className="mt-2 text-lg font-semibold text-white">Moderate confidence</p>
-            <p className="mt-2 text-sm text-slate-200">
-              Based on observed liquidity and stability of recent moves.
+            <p className="mt-2 text-lg font-semibold text-white">
+              {(market.confidenceLabel ?? confidenceFromVolume(market.volume)).toUpperCase()} (
+              {market.confidenceScore ?? "n/a"})
             </p>
+            <p className="mt-2 text-sm text-slate-200">{market.confidenceExplanation}</p>
           </div>
           <div className="glass-panel p-4">
             <p className="text-xs uppercase tracking-wide text-slate-300">
