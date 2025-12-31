@@ -7,7 +7,7 @@ export type BeliefShiftDisplay = BeliefShift & {
   confidence?: "low" | "medium" | "high";
 };
 
-const confidenceCopy: Record<BeliefShiftDisplay["confidence"] | "unknown", string> = {
+const confidenceCopy: Record<NonNullable<BeliefShiftDisplay["confidence"]> | "unknown", string> = {
   low: "thin liquidity",
   medium: "moderate liquidity",
   high: "strong liquidity",
