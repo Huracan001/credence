@@ -9,6 +9,11 @@ import {
 const DEFAULT_THRESHOLD = 0.01; // 1 percentage point in probability space
 const MIN_VOLUME_DELTA = 500; // trigger on modest absolute volume upticks
 
+function classifyCategory(market: Market): string {
+  if (market.assetId) return `asset:${market.assetId}`;
+  return "general";
+}
+
 type DetectOptions = {
   threshold?: number;
 };
@@ -50,6 +55,9 @@ export async function detectBeliefShifts(
         previousProbability,
         currentProbability: market.probability,
         delta,
+        category: classifyCategory(market),
+        volume24h: market.volume24h ?? market.volume ?? null,
+        liquidity: market.volume ?? null,
         detectedAt: new Date().toISOString(),
       };
       await recordBeliefShift(shift);

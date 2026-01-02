@@ -29,6 +29,9 @@ export type BeliefShift = {
   previousProbability: number;
   currentProbability: number;
   delta: number;
+  category?: string | null;
+  volume24h?: number | null;
+  liquidity?: number | null;
   detectedAt: string; // ISO timestamp
 };
 

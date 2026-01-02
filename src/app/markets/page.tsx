@@ -1,12 +1,16 @@
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
+import { BeliefShiftHeatmap } from "@/components/BeliefShiftHeatmap";
 import { MarketTable } from "@/components/MarketTable";
-import { getMarketsSnapshot } from "@/lib/server/markets";
+import { getBeliefShiftHeatmapSnapshot, getMarketsSnapshot } from "@/lib/server/markets";
 
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 const FALLBACK_TOP_MOVERS = 3;
 
 export default async function MarketsPage() {
-  const snapshot = await getMarketsSnapshot();
+  const [snapshot, heatmap] = await Promise.all([
+    getMarketsSnapshot(),
+    getBeliefShiftHeatmapSnapshot({ bucketMs: 60 * 60 * 1000, lookbackHours: 24 }),
+  ]);
   const hasMarkets = snapshot.markets.length > 0;
   const confidenceFromVolume = (volume: number): BeliefShiftDisplay["confidence"] => {
     if (volume >= 5_000_000) return "high";
@@ -87,6 +91,8 @@ export default async function MarketsPage() {
           emptyMessage="No shifts detected yet—showing latest movers instead."
         />
       </div>
+
+      <BeliefShiftHeatmap heatmap={heatmap} />
     </div>
   );
 }

@@ -63,6 +63,9 @@ function applySchema(db: Database) {
       previousProbability REAL NOT NULL,
       currentProbability REAL NOT NULL,
       delta REAL NOT NULL,
+      category TEXT,
+      volume24h REAL,
+      liquidity REAL,
       detectedAt TEXT NOT NULL,
       UNIQUE(marketId, detectedAt)
     );
@@ -81,6 +84,27 @@ function applySchema(db: Database) {
       UNIQUE(marketId, shiftDetectedAt)
     );
   `);
+
+  // Ensure new columns exist on older databases.
+  const columnsStmt = db.prepare(`PRAGMA table_info(belief_shifts);`);
+  const columns: Array<{ name: string }> = [];
+  while (columnsStmt.step()) {
+    columns.push(columnsStmt.getAsObject() as { name: string });
+  }
+  columnsStmt.free();
+  const existing = new Set(columns.map((c) => c.name));
+  const addColumn = (name: string, type: string) => {
+    if (!existing.has(name)) {
+      try {
+        db.run(`ALTER TABLE belief_shifts ADD COLUMN ${name} ${type};`);
+      } catch (err) {
+        console.warn(`[db] failed to add column ${name} to belief_shifts`, err);
+      }
+    }
+  };
+  addColumn("category", "TEXT");
+  addColumn("volume24h", "REAL");
+  addColumn("liquidity", "REAL");
 }
 
 async function persist(db: Database) {

@@ -93,14 +93,17 @@ export async function recordBeliefShift(shift: BeliefShift): Promise<void> {
   return withDb((db) => {
     const stmt = db.prepare(
       `INSERT OR IGNORE INTO belief_shifts
-      (marketId, previousProbability, currentProbability, delta, detectedAt)
-      VALUES (?, ?, ?, ?, ?)`,
+      (marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     stmt.run([
       shift.marketId,
       shift.previousProbability,
       shift.currentProbability,
       shift.delta,
+      shift.category ?? null,
+      shift.volume24h ?? null,
+      shift.liquidity ?? null,
       shift.detectedAt,
     ]);
     stmt.free();
@@ -112,7 +115,7 @@ export async function getLatestBeliefShift(
 ): Promise<BeliefShift | null> {
   return withDb((db) => {
     const stmt = db.prepare(
-      `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+      `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
        FROM belief_shifts
        WHERE marketId = ?
        ORDER BY datetime(detectedAt) DESC
@@ -133,7 +136,7 @@ export async function getLatestBeliefShift(
 export async function listBeliefShifts(limit = 20): Promise<BeliefShift[]> {
   return withDb((db) => {
     const stmt = db.prepare(
-      `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+      `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
        FROM belief_shifts
        ORDER BY datetime(detectedAt) DESC
        LIMIT ?`,
@@ -156,14 +159,14 @@ export async function listBeliefShiftsForMarket(
   return withDb((db) => {
     const stmt = sinceIso
       ? db.prepare(
-          `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+          `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
            FROM belief_shifts
            WHERE marketId = ? AND datetime(detectedAt) >= datetime(?)
            ORDER BY datetime(detectedAt) DESC
            LIMIT ?`,
         )
       : db.prepare(
-          `SELECT marketId, previousProbability, currentProbability, delta, detectedAt
+          `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
            FROM belief_shifts
            WHERE marketId = ?
            ORDER BY datetime(detectedAt) DESC
@@ -174,6 +177,41 @@ export async function listBeliefShiftsForMarket(
       stmt.bind([marketId, sinceIso, limit]);
     } else {
       stmt.bind([marketId, limit]);
+    }
+
+    const rows: BeliefShift[] = [];
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject() as BeliefShift);
+    }
+    stmt.free();
+    return rows;
+  });
+}
+
+export async function listBeliefShiftsSince(
+  sinceIso?: string,
+  limit = 500,
+): Promise<BeliefShift[]> {
+  return withDb((db) => {
+    const stmt = sinceIso
+      ? db.prepare(
+          `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
+           FROM belief_shifts
+           WHERE datetime(detectedAt) >= datetime(?)
+           ORDER BY datetime(detectedAt) DESC
+           LIMIT ?`,
+        )
+      : db.prepare(
+          `SELECT marketId, previousProbability, currentProbability, delta, category, volume24h, liquidity, detectedAt
+           FROM belief_shifts
+           ORDER BY datetime(detectedAt) DESC
+           LIMIT ?`,
+        );
+
+    if (sinceIso) {
+      stmt.bind([sinceIso, limit]);
+    } else {
+      stmt.bind([limit]);
     }
 
     const rows: BeliefShift[] = [];
