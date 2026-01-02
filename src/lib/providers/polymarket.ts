@@ -6,6 +6,7 @@ const POLYMARKET_URL =
 
 const MIN_VOLUME = 1_000; // temporary relaxed floor for early signal
 const MIN_LIQUIDITY = 250; // temporary relaxed floor for early signal
+const MAX_STALE_MS = 7 * 24 * 60 * 60 * 1000; // drop markets not updated in 7 days
 
 type PolymarketMarket = {
   id: string;
@@ -22,6 +23,7 @@ type PolymarketMarket = {
   created_at?: string;
   updated_at?: string;
   endDate?: string;
+  closeTime?: string;
   active?: boolean;
   closed?: boolean;
   status?: string;
@@ -120,13 +122,26 @@ function normalizeMarket(raw: PolymarketMarket): Market | null {
     raw.closed === true ||
     raw.active === false ||
     (status ? closedStatuses.has(status) : false);
-  const expiresAt = raw.endDate ? new Date(raw.endDate) : null;
+  const expiresAt = raw.endDate ? new Date(raw.endDate) : raw.closeTime ? new Date(raw.closeTime) : null;
   const expired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+  const updatedAtMs = new Date(updatedAt).getTime();
+  const stale = Number.isFinite(updatedAtMs) && updatedAtMs < Date.now() - MAX_STALE_MS;
+  const yearInText = (() => {
+    const text = `${raw.question ?? ""} ${raw.title ?? ""}`;
+    const matches = text.match(/20\d{2}/g);
+    if (!matches) return null;
+    const years = matches.map((y) => parseInt(y, 10)).filter((y) => !Number.isNaN(y));
+    return years.length ? Math.max(...years) : null;
+  })();
+  const currentYear = new Date().getFullYear();
+  const isPastYear = yearInText !== null && yearInText < currentYear;
 
   if (volume < MIN_VOLUME) return null;
   if (!hasOrderBook) return null;
   if (liquidity !== null && liquidity < MIN_LIQUIDITY) return null;
   if (isResolvedOrClosed || expired) return null;
+  if (stale) return null;
+  if (isPastYear) return null;
 
   return {
     id: raw.id ?? question.toLowerCase().replace(/\s+/g, "-").slice(0, 40),
