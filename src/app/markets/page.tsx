@@ -1,14 +1,17 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { MarketTable } from "@/components/MarketTable";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 const FALLBACK_TOP_MOVERS = 3;
 
 export default async function MarketsPage() {
+  noStore(); // ensure this route is treated as dynamic and never statically generated
   const snapshot = await getMarketsSnapshot({ forceRefresh: true });
   const hasMarkets = snapshot.markets.length > 0;
   const confidenceFromVolume = (volume: number): BeliefShiftDisplay["confidence"] => {
