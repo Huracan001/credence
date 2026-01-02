@@ -4,12 +4,15 @@ import { Market } from "@/types";
 const POLYMARKET_URL =
   "https://gamma-api.polymarket.com/markets?limit=100&offset=0&closed=false";
 
+const MIN_VOLUME = 1_000; // temporary relaxed floor for early signal
+const MIN_LIQUIDITY = 250; // temporary relaxed floor for early signal
+
 type PolymarketMarket = {
   id: string;
   question?: string;
   title?: string;
-  outcomes?: string[];
-  outcomePrices?: Array<number | string>;
+  outcomes?: string[] | string;
+  outcomePrices?: Array<number | string> | string;
   bestBid?: number | string;
   bestAsk?: number | string;
   lastPrice?: number | string;
@@ -19,6 +22,9 @@ type PolymarketMarket = {
   created_at?: string;
   updated_at?: string;
   endDate?: string;
+  active?: boolean;
+  closed?: boolean;
+  status?: string;
 };
 
 const fallbackMarkets: Market[] = [
@@ -47,36 +53,81 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
-function pickProbability(market: PolymarketMarket): number | null {
-  const yesFromOutcome =
-    market.outcomePrices && market.outcomePrices.length
-      ? toNumber(market.outcomePrices[0])
-      : null;
-  if (yesFromOutcome !== null) return yesFromOutcome;
+function toArray<T = unknown>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
-  const bid = toNumber(market.bestBid);
-  const ask = toNumber(market.bestAsk);
-  if (bid !== null && ask !== null) return (bid + ask) / 2;
+function findYesIndex(outcomes?: string[]): number | null {
+  if (!outcomes || !outcomes.length) return null;
+  const idx = outcomes.findIndex((o) => typeof o === "string" && o.toLowerCase() === "yes");
+  return idx >= 0 ? idx : null;
+}
 
-  const last = toNumber(market.lastPrice);
-  return last;
+function pickProbability(
+  raw: PolymarketMarket,
+  yesIndex: number | null,
+  outcomePrices: Array<number | string>,
+): number | null {
+  const bid = toNumber(raw.bestBid);
+  const ask = toNumber(raw.bestAsk);
+
+  if (bid !== null && ask !== null) {
+    const mid = (bid + ask) / 2;
+    if (mid > 0 && mid < 1) return mid;
+  }
+
+  if (yesIndex !== null && outcomePrices.length > yesIndex) {
+    const price = toNumber(outcomePrices[yesIndex]);
+    if (price !== null && price > 0 && price < 1) return price;
+  }
+
+  return null;
 }
 
 function normalizeMarket(raw: PolymarketMarket): Market | null {
-  const probability = pickProbability(raw);
+  const outcomes = toArray<string>(raw.outcomes);
+  const outcomePrices = toArray<number | string>(raw.outcomePrices);
+
+  const yesIndex = findYesIndex(outcomes);
+  const probability = pickProbability(raw, yesIndex, outcomePrices);
   if (probability === null) return null;
 
   const question = raw.question ?? raw.title ?? "Untitled market";
   const volume24h = toNumber(raw.volume24h);
+  const liquidity = toNumber(raw.liquidity);
   const volume =
     volume24h ??
     toNumber(raw.openInterest) ??
-    toNumber(raw.liquidity) ??
+    liquidity ??
     0;
   const updatedAt = raw.updated_at ?? raw.created_at ?? new Date().toISOString();
   const bestBid = toNumber(raw.bestBid);
   const bestAsk = toNumber(raw.bestAsk);
   const lastPrice = toNumber(raw.lastPrice);
+  const hasOrderBook = bestBid !== null || bestAsk !== null;
+  const status = raw.status?.toLowerCase();
+  const isResolvedOrClosed =
+    raw.closed === true ||
+    raw.active === false ||
+    status === "closed" ||
+    status === "resolved" ||
+    status === "settled";
+  const expiresAt = raw.endDate ? new Date(raw.endDate) : null;
+  const expired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+
+  if (volume < MIN_VOLUME) return null;
+  if (!hasOrderBook) return null;
+  if (liquidity !== null && liquidity < MIN_LIQUIDITY) return null;
+  if (isResolvedOrClosed || expired) return null;
 
   return {
     id: raw.id ?? question.toLowerCase().replace(/\s+/g, "-").slice(0, 40),

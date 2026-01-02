@@ -22,7 +22,15 @@ function formatTime(timestamp: string) {
   });
 }
 
-export function BeliefShiftFeed({ shifts }: { shifts: BeliefShiftDisplay[] }) {
+export function BeliefShiftFeed({
+  shifts,
+  subtitle = "Large moves flagged for review",
+  emptyMessage,
+}: {
+  shifts: BeliefShiftDisplay[];
+  subtitle?: string;
+  emptyMessage?: string;
+}) {
   return (
     <div className="glass-panel">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -31,44 +39,50 @@ export function BeliefShiftFeed({ shifts }: { shifts: BeliefShiftDisplay[] }) {
             Recent belief shifts
           </p>
           <p className="text-xs text-slate-400">
-            Large moves flagged for review
+            {subtitle}
           </p>
         </div>
         <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">
           Monitor uncertainty
         </span>
       </div>
-      <ul className="divide-y divide-white/10">
-        {shifts.map((shift) => (
-          <li key={`${shift.marketId}-${shift.detectedAt}`} className="px-4 py-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-2">
+      {shifts.length ? (
+        <ul className="divide-y divide-white/10">
+          {shifts.map((shift) => (
+            <li key={`${shift.marketId}-${shift.detectedAt}`} className="px-4 py-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-2">
+                  <Link
+                    href={`/markets/${shift.marketId}`}
+                    className="text-base font-semibold text-white hover:text-sky-200"
+                  >
+                    {shift.question}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                    <ChangeIndicator value={shift.delta} label="shift" />
+                    <span className="rounded-full bg-slate-800/70 px-2 py-1 text-[11px] uppercase tracking-wide text-slate-200">
+                      {confidenceCopy[shift.confidence ?? "unknown"]}
+                    </span>
+                    <span className="text-slate-400">
+                      Detected {formatTime(shift.detectedAt)}
+                    </span>
+                  </div>
+                </div>
                 <Link
                   href={`/markets/${shift.marketId}`}
-                  className="text-base font-semibold text-white hover:text-sky-200"
+                  className="text-sm text-sky-300 underline-offset-4 hover:underline"
                 >
-                  {shift.question}
+                  View explanation
                 </Link>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                  <ChangeIndicator value={shift.delta} label="shift" />
-                  <span className="rounded-full bg-slate-800/70 px-2 py-1 text-[11px] uppercase tracking-wide text-slate-200">
-                    {confidenceCopy[shift.confidence ?? "unknown"]}
-                  </span>
-                  <span className="text-slate-400">
-                    Detected {formatTime(shift.detectedAt)}
-                  </span>
-                </div>
               </div>
-              <Link
-                href={`/markets/${shift.marketId}`}
-                className="text-sm text-sky-300 underline-offset-4 hover:underline"
-              >
-                View explanation
-              </Link>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="px-4 py-4 text-sm text-slate-300">
+          {emptyMessage ?? "No shifts detected yet—waiting for movement."}
+        </div>
+      )}
     </div>
   );
 }

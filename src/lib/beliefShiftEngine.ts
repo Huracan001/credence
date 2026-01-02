@@ -6,7 +6,8 @@ import {
   upsertMarkets,
 } from "./persistence/store";
 
-const DEFAULT_THRESHOLD = 0.03; // 3 percentage points in probability space
+const DEFAULT_THRESHOLD = 0.01; // 1 percentage point in probability space
+const MIN_VOLUME_DELTA = 500; // trigger on modest absolute volume upticks
 
 type DetectOptions = {
   threshold?: number;
@@ -24,17 +25,22 @@ export async function detectBeliefShifts(
   const shifts: BeliefShift[] = [];
 
   for (const market of markets) {
-    // Prefer last stored market probability; fall back to last shift or current value.
+    // Prefer last stored market probability; fall back to last shift.
     const storedMarket = await getMarketById(market.id);
     const latestShift = await getLatestBeliefShift(market.id);
-    const previousProbability =
-      storedMarket?.probability ?? latestShift?.currentProbability ?? market.probability;
+    const previousProbability = storedMarket?.probability ?? latestShift?.currentProbability ?? null;
 
-    const previousVolume24h = storedMarket?.volume ?? 0; // treat stored volume as last 24h snapshot
+    // First observation: persist baseline, skip detection once.
+    if (previousProbability === null) {
+      await upsertMarkets([market]);
+      continue;
+    }
+
+    const previousVolume = storedMarket?.volume ?? 0; // treat stored volume as last 24h snapshot
     const delta = market.probability - previousProbability;
     const absDelta = Math.abs(delta);
     const volumeSpike =
-      previousVolume24h > 0 ? market.volume > previousVolume24h * 2 : false;
+      previousVolume > 0 && market.volume - previousVolume >= MIN_VOLUME_DELTA;
 
     const shouldTrigger = absDelta >= threshold || volumeSpike;
 

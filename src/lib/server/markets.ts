@@ -1,7 +1,6 @@
 import { detectBeliefShifts } from "@/lib/beliefShiftEngine";
 import { getFromCache, setCache } from "@/lib/cache";
 import { fetchPolymarketMarkets } from "@/lib/providers/polymarket";
-import { fetchKalshiMarkets } from "@/lib/providers/kalshi";
 import { fetchCoinPrices } from "@/lib/providers/coingecko";
 import {
   listBeliefShifts,
@@ -22,7 +21,7 @@ import {
 } from "@/lib/metrics";
 
 const CACHE_KEY = "markets-latest";
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 60 * 1000; // 1 minute
 
 function detectAssetId(question: string): string | null {
   const q = question.toLowerCase();
@@ -148,10 +147,10 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
 export async function refreshMarkets(): Promise<MarketsResponse> {
   let data: Market[] = [];
   try {
-    data = await fetchKalshiMarkets();
-  } catch (err) {
-    console.error("[refreshMarkets] kalshi fetch failed, falling back to polymarket", err);
     data = await fetchPolymarketMarkets();
+  } catch (err) {
+    console.error("[refreshMarkets] polymarket fetch failed", err);
+    throw err;
   }
   const shifts = await detectBeliefShifts(data);
   const enriched = await enrichMarkets(data);
@@ -197,7 +196,7 @@ export async function getMarketSnapshotById(id: string): Promise<Market | null> 
 
   // Last resort: direct provider fetch + enrich (no cache) to avoid stale state
   try {
-    const direct = await fetchKalshiMarkets();
+    const direct = await fetchPolymarketMarkets();
     const enriched = await enrichMarkets(direct);
     const live = enriched.find((m) => m.id === id);
     if (live) return live;

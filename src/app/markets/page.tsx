@@ -3,6 +3,7 @@ import { MarketTable } from "@/components/MarketTable";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
+const FALLBACK_TOP_MOVERS = 3;
 
 export default async function MarketsPage() {
   const snapshot = await getMarketsSnapshot();
@@ -12,7 +13,7 @@ export default async function MarketsPage() {
     if (volume >= 1_000_000) return "medium";
     return "low";
   };
-  const shiftDisplays: BeliefShiftDisplay[] = snapshot.shifts
+  const mappedShifts: BeliefShiftDisplay[] = snapshot.shifts
     .map((shift) => {
       const market = snapshot.markets.find((m) => m.id === shift.marketId);
       const confidence = market ? confidenceFromVolume(market.volume) : "medium";
@@ -24,6 +25,28 @@ export default async function MarketsPage() {
       };
     })
     .filter((shift) => shift.volume !== undefined && shift.volume >= MIN_LIQUIDITY_FOR_SHIFTS);
+
+  const hasRealShifts = mappedShifts.length > 0;
+  const fallbackShifts: BeliefShiftDisplay[] = hasRealShifts
+    ? []
+    : snapshot.markets
+        .filter((m) => m.delta24h !== null && m.delta24h !== undefined)
+        .sort((a, b) => Math.abs(b.delta24h ?? 0) - Math.abs(a.delta24h ?? 0))
+        .slice(0, FALLBACK_TOP_MOVERS)
+        .map((m) => ({
+          marketId: m.id,
+          previousProbability: m.probability - (m.delta24h ?? 0),
+          currentProbability: m.probability,
+          delta: m.delta24h ?? 0,
+          detectedAt: m.updatedAt,
+          question: m.question,
+          confidence: confidenceFromVolume(m.volume),
+          volume: m.volume,
+        }));
+  const shiftDisplays = hasRealShifts ? mappedShifts : fallbackShifts;
+  const shiftSubtitle = hasRealShifts
+    ? "Large moves flagged for review"
+    : "Largest belief changes (low confidence)";
 
   return (
     <div className="space-y-8">
@@ -58,7 +81,11 @@ export default async function MarketsPage() {
             you can review the narrative rather than chase momentum.
           </p>
         </div>
-        <BeliefShiftFeed shifts={shiftDisplays} />
+        <BeliefShiftFeed
+          shifts={shiftDisplays}
+          subtitle={shiftSubtitle}
+          emptyMessage="No shifts detected yet—showing latest movers instead."
+        />
       </div>
     </div>
   );
