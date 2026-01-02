@@ -8,7 +8,6 @@ import {
   getHistoricalProbability,
   listBeliefShiftsForMarket,
 } from "@/lib/persistence/store";
-import { buildBeliefShiftHeatmap, BeliefShiftHeatmap } from "@/lib/heatmap";
 import { MarketsResponse, Market, BeliefShift } from "@/types";
 import {
   buildExplanationContext,
@@ -180,12 +179,6 @@ export async function getMarketsSnapshot(options?: { forceRefresh?: boolean }): 
     setCache(CACHE_KEY, withDemo, CACHE_TTL_MS);
     return withDemo;
   }
-}
-
-export async function getBeliefShiftHeatmapSnapshot(
-  options?: Parameters<typeof buildBeliefShiftHeatmap>[0],
-): Promise<BeliefShiftHeatmap> {
-  return buildBeliefShiftHeatmap(options);
 }
 
 export async function getMarketSnapshotById(id: string): Promise<Market | null> {
