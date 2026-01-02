@@ -21,7 +21,15 @@ function parseFilters(req: NextRequest) {
   };
 }
 
-function applyFilters<T extends { confidenceLabel?: string; liquidity?: number; probability?: number; displayProbability?: number }>(
+function applyFilters<
+  T extends {
+    confidenceLabel?: string;
+    liquidity?: number;
+    probability?: number;
+    displayProbability?: number;
+    volume?: number;
+  },
+>(
   markets: T[],
   filters: ReturnType<typeof parseFilters>,
 ) {
@@ -29,9 +37,8 @@ function applyFilters<T extends { confidenceLabel?: string; liquidity?: number; 
     if (filters.confidence && m.confidenceLabel && m.confidenceLabel !== filters.confidence) {
       return false;
     }
-    if (filters.minLiquidity !== undefined && typeof m["volume"] === "number") {
-      // @ts-expect-error volume is present on Market
-      if (m["volume"] < filters.minLiquidity) return false;
+    if (filters.minLiquidity !== undefined && typeof m.volume === "number") {
+      if (m.volume < filters.minLiquidity) return false;
     }
     const prob = (m as unknown as { displayProbability?: number }).displayProbability ?? 0;
     if (filters.probMin !== undefined && prob < filters.probMin) return false;
