@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getMarketSnapshotById } from "@/lib/server/markets";
 
 export const revalidate = 0;
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
+  _req: NextRequest,
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const market = await getMarketSnapshotById(params.id);
+    const { id } = await context.params;
+    const market = await getMarketSnapshotById(id);
     if (!market) {
       return NextResponse.json({ error: "Market not found" }, { status: 404 });
     }
