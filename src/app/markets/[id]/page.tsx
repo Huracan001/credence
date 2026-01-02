@@ -18,6 +18,13 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
   return "low";
 }
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 export default async function MarketDetail({ params }: Props) {
   let market = await getMarketSnapshotById(params.id);
 
@@ -83,7 +90,7 @@ export default async function MarketDetail({ params }: Props) {
                 Liquidity: ~${Math.round(market.volume).toLocaleString()}
               </span>
               <span className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200">
-                Updated {new Date(market.updatedAt).toLocaleDateString()}
+                Updated {dateFormatter.format(new Date(market.updatedAt))}
               </span>
             </div>
           </div>

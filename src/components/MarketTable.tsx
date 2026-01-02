@@ -14,6 +14,13 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
   return "low";
 }
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 export function MarketTable({ markets, shifts = [] }: Props) {
   const shiftMap = new Map<string, BeliefShift>();
   shifts.forEach((s) => shiftMap.set(s.marketId, s));
@@ -49,7 +56,7 @@ export function MarketTable({ markets, shifts = [] }: Props) {
               </Link>
               <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                 <span className="rounded-full bg-slate-800/70 px-2 py-1 uppercase tracking-wide">
-                  Updated {new Date(market.updatedAt).toLocaleDateString()}
+                  Updated {dateFormatter.format(new Date(market.updatedAt))}
                 </span>
               </div>
             </div>

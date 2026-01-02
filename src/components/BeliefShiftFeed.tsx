@@ -14,12 +14,15 @@ const confidenceCopy: Record<NonNullable<BeliefShiftDisplay["confidence"]> | "un
   unknown: "liquidity unknown",
 };
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 function formatTime(timestamp: string) {
   const date = new Date(timestamp);
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  return dateFormatter.format(date);
 }
 
 export function BeliefShiftFeed({
