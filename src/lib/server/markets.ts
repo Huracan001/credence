@@ -37,6 +37,64 @@ function detectAssetId(question: string): string | null {
   return null;
 }
 
+const CRYPTO_KEYWORDS = [
+  "crypto",
+  "blockchain",
+  "token",
+  "stablecoin",
+  "defi",
+  "etf",
+];
+
+const ECONOMY_KEYWORDS = [
+  "inflation",
+  "cpi",
+  "gdp",
+  "economy",
+  "economic",
+  "recession",
+  "interest rate",
+  "rates",
+  "federal reserve",
+  "fed",
+  "jobs report",
+  "employment",
+  "unemployment",
+  "treasury",
+  "yield",
+];
+
+function isCryptoOrEconomyTopic(question: string, assetId?: string | null): boolean {
+  const q = question.toLowerCase();
+  const hasAssetId = Boolean(assetId ?? detectAssetId(question));
+  const hasCryptoKeyword = CRYPTO_KEYWORDS.some((keyword) => q.includes(keyword));
+  const hasEconomyKeyword = ECONOMY_KEYWORDS.some((keyword) => q.includes(keyword));
+  return hasAssetId || hasCryptoKeyword || hasEconomyKeyword;
+}
+
+function prioritizeMarkets(markets: Market[]): Market[] {
+  return [...markets].sort((a, b) => {
+    const aPriority = isCryptoOrEconomyTopic(a.question, a.assetId);
+    const bPriority = isCryptoOrEconomyTopic(b.question, b.assetId);
+    if (aPriority === bPriority) return 0;
+    return aPriority ? -1 : 1;
+  });
+}
+
+function prioritizeShifts(shifts: BeliefShift[], markets: Market[]): BeliefShift[] {
+  const priorityByMarketId = new Map<string, boolean>();
+  markets.forEach((market) =>
+    priorityByMarketId.set(market.id, isCryptoOrEconomyTopic(market.question, market.assetId)),
+  );
+
+  return [...shifts].sort((a, b) => {
+    const aPriority = priorityByMarketId.get(a.marketId) ?? false;
+    const bPriority = priorityByMarketId.get(b.marketId) ?? false;
+    if (aPriority === bPriority) return 0;
+    return aPriority ? -1 : 1;
+  });
+}
+
 function maybeInjectDemoShift(response: MarketsResponse): MarketsResponse {
   if (process.env.DEMO_SHIFTS !== "true") return response;
   if (!response.markets.length) return response;
@@ -154,8 +212,10 @@ export async function refreshMarkets(): Promise<MarketsResponse> {
   }
   const shifts = await detectBeliefShifts(data);
   const enriched = await enrichMarkets(data);
+  const prioritizedMarkets = prioritizeMarkets(enriched);
+  const prioritizedShifts = prioritizeShifts(shifts, prioritizedMarkets);
 
-  const response: MarketsResponse = { markets: enriched, shifts };
+  const response: MarketsResponse = { markets: prioritizedMarkets, shifts: prioritizedShifts };
   const withDemo = maybeInjectDemoShift(response);
   setCache(CACHE_KEY, withDemo, CACHE_TTL_MS);
   return withDemo;
@@ -174,7 +234,9 @@ export async function getMarketsSnapshot(options?: { forceRefresh?: boolean }): 
     const markets = await getMarkets();
     const shifts = await listBeliefShifts(10);
     const enriched = await enrichMarkets(markets);
-    const fallback: MarketsResponse = { markets: enriched, shifts };
+    const prioritizedMarkets = prioritizeMarkets(enriched);
+    const prioritizedShifts = prioritizeShifts(shifts, prioritizedMarkets);
+    const fallback: MarketsResponse = { markets: prioritizedMarkets, shifts: prioritizedShifts };
     const withDemo = maybeInjectDemoShift(fallback);
     setCache(CACHE_KEY, withDemo, CACHE_TTL_MS);
     return withDemo;

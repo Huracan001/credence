@@ -29,23 +29,6 @@ type PolymarketMarket = {
   status?: string;
 };
 
-const fallbackMarkets: Market[] = [
-  {
-    id: "fallback-btc-etf",
-    question: "Will U.S.-listed Bitcoin spot ETFs record net inflows this quarter?",
-    probability: 0.6,
-    volume: 5_000_000,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "fallback-eth-upgrade",
-    question: "Will Ethereum ship the next major upgrade before May 2026?",
-    probability: 0.7,
-    volume: 3_000_000,
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 function toNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isNaN(value) ? null : value;
   if (typeof value === "string") {
@@ -181,8 +164,8 @@ export async function fetchPolymarketMarkets(): Promise<Market[]> {
 
     return normalized;
   } catch (err) {
-    console.error("[polymarket] falling back to mock data", err);
-    return fallbackMarkets;
+    console.error("[polymarket] fetch failed; no mock markets available", err);
+    throw err instanceof Error ? err : new Error("Polymarket fetch failed");
   }
 }
 
