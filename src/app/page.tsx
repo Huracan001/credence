@@ -4,6 +4,8 @@ import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
+export const dynamic = "force-dynamic";
+
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 const FALLBACK_TOP_MOVERS = 3;
 
