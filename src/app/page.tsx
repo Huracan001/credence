@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
@@ -6,6 +7,7 @@ import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 const FALLBACK_TOP_MOVERS = 3;
@@ -17,6 +19,7 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
 }
 
 export default async function Home() {
+  noStore(); // enforce dynamic rendering; avoid static pre-rendering with live fetches
   const snapshot = await getMarketsSnapshot({ forceRefresh: true });
   const featuredMarkets = snapshot.markets.slice(0, 3);
   const hasMarkets = snapshot.markets.length > 0;
