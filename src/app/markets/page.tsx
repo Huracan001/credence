@@ -3,6 +3,7 @@ import { MarketTable } from "@/components/MarketTable";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const MIN_LIQUIDITY_FOR_SHIFTS = 50_000;
 const FALLBACK_TOP_MOVERS = 3;
