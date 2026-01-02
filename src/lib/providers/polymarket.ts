@@ -115,12 +115,11 @@ function normalizeMarket(raw: PolymarketMarket): Market | null {
   const lastPrice = toNumber(raw.lastPrice);
   const hasOrderBook = bestBid !== null || bestAsk !== null;
   const status = raw.status?.toLowerCase();
+  const closedStatuses = new Set(["closed", "resolved", "settled", "finalized", "expired"]);
   const isResolvedOrClosed =
     raw.closed === true ||
     raw.active === false ||
-    status === "closed" ||
-    status === "resolved" ||
-    status === "settled";
+    (status ? closedStatuses.has(status) : false);
   const expiresAt = raw.endDate ? new Date(raw.endDate) : null;
   const expired = expiresAt ? expiresAt.getTime() < Date.now() : false;
 
