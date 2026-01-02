@@ -8,7 +8,7 @@ const FALLBACK_TOP_MOVERS = 3;
 
 export default async function MarketsPage() {
   const [snapshot, heatmap] = await Promise.all([
-    getMarketsSnapshot(),
+    getMarketsSnapshot({ forceRefresh: true }),
     getBeliefShiftHeatmapSnapshot({ bucketMs: 60 * 60 * 1000, lookbackHours: 24 }),
   ]);
   const hasMarkets = snapshot.markets.length > 0;

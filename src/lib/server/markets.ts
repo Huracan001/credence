@@ -162,9 +162,11 @@ export async function refreshMarkets(): Promise<MarketsResponse> {
   return withDemo;
 }
 
-export async function getMarketsSnapshot(): Promise<MarketsResponse> {
-  const cached = getFromCache<MarketsResponse>(CACHE_KEY);
-  if (cached) return cached;
+export async function getMarketsSnapshot(options?: { forceRefresh?: boolean }): Promise<MarketsResponse> {
+  if (!options?.forceRefresh) {
+    const cached = getFromCache<MarketsResponse>(CACHE_KEY);
+    if (cached) return cached;
+  }
 
   try {
     return await refreshMarkets();

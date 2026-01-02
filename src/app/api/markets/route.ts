@@ -43,7 +43,8 @@ function applyFilters<T extends { confidenceLabel?: string; liquidity?: number; 
 export async function GET(req: NextRequest) {
   try {
     const filters = parseFilters(req);
-    const data = await getMarketsSnapshot();
+    const force = new URL(req.url).searchParams.get("force") === "true";
+    const data = await getMarketsSnapshot({ forceRefresh: force });
     const filtered = applyFilters(data.markets, filters);
 
     return NextResponse.json(

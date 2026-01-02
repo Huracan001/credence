@@ -14,7 +14,7 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
 }
 
 export default async function Home() {
-  const snapshot = await getMarketsSnapshot();
+  const snapshot = await getMarketsSnapshot({ forceRefresh: true });
   const featuredMarkets = snapshot.markets.slice(0, 3);
   const hasMarkets = snapshot.markets.length > 0;
   const mappedShifts: BeliefShiftDisplay[] = snapshot.shifts
