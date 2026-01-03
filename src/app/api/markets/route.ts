@@ -29,15 +29,6 @@ function passesFilters(m: Market, filters: Filters) {
     return false;
   }
 
-  if (
-    filters.minLiquidity !== undefined &&
-    "volume" in m &&
-    typeof m.volume === "number" &&
-    m.volume < filters.minLiquidity
-  ) {
-    return false;
-  }
-
   const prob = m.displayProbability ?? m.probability ?? 0;
   if (filters.probMin !== undefined && prob < filters.probMin) return false;
   if (filters.probMax !== undefined && prob > filters.probMax) return false;
