@@ -11,13 +11,14 @@ import {
 import { MarketsResponse, Market, BeliefShift } from "@/types";
 import {
   buildExplanationContext,
-  clampDisplayProbability,
   computeConfidence,
-  computeDeltas,
   computeLiquidityPercentiles,
   computeVolatility,
+  computeProbabilityChanges,
+  evaluateExplanationEligibility,
   formatLiquidityBar,
-  probabilityLabel,
+  liquidityLabelForPercentile,
+  normalizeProbability,
 } from "@/lib/metrics";
 
 const CACHE_KEY = "markets-latest";
@@ -127,6 +128,7 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
 
   const enriched = await Promise.all(
     markets.map(async (market) => {
+      const normalizedProb = normalizeProbability(market.rawProbability ?? market.probability);
       const assetId = detectAssetId(market.question);
       const priceInfo = assetId ? coinPrices[assetId] : undefined;
 
@@ -140,13 +142,14 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
         listBeliefShiftsForMarket(market.id, cutoff7d, 200),
       ]);
 
-      const { delta24h, delta7d, meaningful } = computeDeltas(
-        market.probability,
+      const { probabilityChange24h, probabilityChange7d, meaningfulMove } = computeProbabilityChanges(
+        normalizedProb.rawProbability,
         prior24h,
         prior7d,
       );
       const volatility = computeVolatility(shifts7d, market.probability);
       const tradeFrequency24h = shifts7d.filter((s) => s.detectedAt >= cutoff24h).length;
+      const lastShiftAt = shifts7d[0]?.detectedAt ?? market.updatedAt;
 
       const spread =
         market.bestBid !== undefined &&
@@ -156,22 +159,43 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
           ? market.bestAsk - market.bestBid
           : null;
 
-      const { score: confidenceScore, label: confidenceLabel, explanation } = computeConfidence({
+      const {
+        score: confidenceScore,
+        label: confidenceLabel,
+        explanation,
+        breakdown: confidenceBreakdown,
+      } = computeConfidence({
         liquidity: market.volume,
         spread,
         volume24h: market.volume24h ?? null,
         volatility,
         tradeFrequency24h,
         updatedAt: market.updatedAt,
+        lastTradeAt: lastShiftAt,
       });
 
-      const displayProbability = clampDisplayProbability(market.probability);
-      const marketLabel = probabilityLabel(displayProbability);
+      const displayProbability = normalizedProb.displayProbability;
+      const marketLabel = normalizedProb.probabilityLabel;
       const liquidityPercentile = liquidityPercentiles.get(market.id) ?? 0;
+      const liquidityLabel = liquidityLabelForPercentile(liquidityPercentile);
       const liquidityBar = formatLiquidityBar(liquidityPercentile);
+      const tradeActivitySummary = `Trades flagged in 24h: ${tradeFrequency24h}; volatility ${
+        volatility !== null ? (volatility * 100).toFixed(1) : "n/a"
+      } pts`;
+      const stale =
+        Number.isFinite(new Date(market.updatedAt).getTime()) &&
+        new Date(market.updatedAt).getTime() < now.getTime() - 3 * 24 * 60 * 60 * 1000;
+      const eligibility = evaluateExplanationEligibility({
+        confidenceScore,
+        liquidity: market.volume,
+        recentActivity: tradeFrequency24h > 0 || meaningfulMove,
+        stale,
+      });
 
-      return {
+      const enrichedMarket: Market = {
         ...market,
+        rawProbability: normalizedProb.rawProbability,
+        probability: normalizedProb.rawProbability,
         assetId,
         priceUsd: priceInfo?.priceUsd ?? null,
         priceChange24h: priceInfo?.change24h ?? null,
@@ -180,22 +204,33 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
         confidenceScore,
         confidenceLabel,
         confidenceExplanation: explanation,
+        confidenceBreakdown,
+        liquidityLabel,
         liquidityPercentile,
         liquidityBar,
-        delta24h,
-        delta7d,
-        meaningfulMove: meaningful,
+        probabilityChange24h,
+        probabilityChange7d,
+        meaningfulMove,
+        tradeActivitySummary,
+        explanationEligible: eligibility.eligible,
+        explanationRefusal: eligibility.reason,
+      };
+
+      const withContext: Market = {
+        ...enrichedMarket,
         explanationContext: buildExplanationContext({
-          market,
-          probabilityChange24h: delta24h,
+          market: enrichedMarket,
+          probabilityChange24h,
+          probabilityChange7d,
           liquidityPercentile,
           confidenceScore,
+          confidenceLabel,
           timeToExpiry: null,
-          tradeActivitySummary: `Recent trades: ${tradeFrequency24h} shifts in 24h; volatility ${
-            volatility !== null ? (volatility * 100).toFixed(1) : "n/a"
-          } pts`,
+          tradeActivitySummary,
         }),
       };
+
+      return withContext;
     }),
   );
 
