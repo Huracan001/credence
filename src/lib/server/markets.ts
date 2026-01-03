@@ -216,7 +216,7 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
         explanationRefusal: eligibility.reason,
       };
 
-      const withContext: Market = {
+      return {
         ...enrichedMarket,
         explanationContext: buildExplanationContext({
           market: enrichedMarket,
@@ -229,8 +229,6 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
           tradeActivitySummary,
         }),
       };
-
-      return withContext;
     }),
   );
 

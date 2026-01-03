@@ -5,6 +5,7 @@ import { BeliefShift } from "@/types";
 export type BeliefShiftDisplay = BeliefShift & {
   question: string;
   confidence?: "low" | "medium" | "high";
+  volume?: number;
 };
 
 const confidenceCopy: Record<NonNullable<BeliefShiftDisplay["confidence"]> | "unknown", string> = {
