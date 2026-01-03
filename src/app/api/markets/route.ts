@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMarketsSnapshot, refreshMarkets } from "@/lib/server/markets";
+import { Market } from "@/types/market";
 
 export const revalidate = 0; // always fresh
+
+type Filters = ReturnType<typeof parseFilters>;
 
 function parseFilters(req: NextRequest) {
   const url = new URL(req.url);
@@ -21,30 +24,25 @@ function parseFilters(req: NextRequest) {
   };
 }
 
-function applyFilters<
-  T extends {
-    confidenceLabel?: string;
-    liquidity?: number;
-    probability?: number;
-    displayProbability?: number;
-    volume?: number;
-  },
->(
-  markets: T[],
-  filters: ReturnType<typeof parseFilters>,
-) {
-  return markets.filter((m) => {
-    if (filters.confidence && m.confidenceLabel && m.confidenceLabel !== filters.confidence) {
-      return false;
-    }
-    if (filters.minLiquidity !== undefined && typeof m.volume === "number") {
-      if (m.volume < filters.minLiquidity) return false;
-    }
-    const prob = (m as unknown as { displayProbability?: number }).displayProbability ?? 0;
-    if (filters.probMin !== undefined && prob < filters.probMin) return false;
-    if (filters.probMax !== undefined && prob > filters.probMax) return false;
-    return true;
-  });
+function passesFilters(m: Market, filters: Filters) {
+  if (filters.confidence && m.confidenceLabel && m.confidenceLabel !== filters.confidence) {
+    return false;
+  }
+
+  if (
+    filters.minLiquidity !== undefined &&
+    "volume" in m &&
+    typeof m.volume === "number" &&
+    m.volume < filters.minLiquidity
+  ) {
+    return false;
+  }
+
+  const prob = m.displayProbability ?? m.probability ?? 0;
+  if (filters.probMin !== undefined && prob < filters.probMin) return false;
+  if (filters.probMax !== undefined && prob > filters.probMax) return false;
+
+  return true;
 }
 
 export async function GET(req: NextRequest) {
@@ -52,7 +50,7 @@ export async function GET(req: NextRequest) {
     const filters = parseFilters(req);
     const force = new URL(req.url).searchParams.get("force") === "true";
     const data = await getMarketsSnapshot({ forceRefresh: force });
-    const filtered = applyFilters(data.markets, filters);
+    const filtered = data.markets.filter((m) => passesFilters(m, filters));
 
     return NextResponse.json(
       {
@@ -72,7 +70,7 @@ export async function GET(req: NextRequest) {
     try {
       const filters = parseFilters(req);
       const data = await refreshMarkets();
-      const filtered = applyFilters(data.markets, filters);
+      const filtered = data.markets.filter((m) => passesFilters(m, filters));
       return NextResponse.json(
         {
           markets: filtered,
