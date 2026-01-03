@@ -36,14 +36,17 @@ export default async function MarketsPage() {
   const fallbackShifts: BeliefShiftDisplay[] = hasRealShifts
     ? []
     : snapshot.markets
-        .filter((m) => m.delta24h !== null && m.delta24h !== undefined)
-        .sort((a, b) => Math.abs(b.delta24h ?? 0) - Math.abs(a.delta24h ?? 0))
+        .filter((m) => m.probabilityChange24h !== null && m.probabilityChange24h !== undefined)
+        .sort(
+          (a, b) =>
+            Math.abs(b.probabilityChange24h ?? 0) - Math.abs(a.probabilityChange24h ?? 0),
+        )
         .slice(0, FALLBACK_TOP_MOVERS)
         .map((m) => ({
           marketId: m.id,
-          previousProbability: m.probability - (m.delta24h ?? 0),
+          previousProbability: m.probability - (m.probabilityChange24h ?? 0),
           currentProbability: m.probability,
-          delta: m.delta24h ?? 0,
+          delta: m.probabilityChange24h ?? 0,
           detectedAt: m.updatedAt,
           question: m.question,
           confidence: confidenceFromVolume(m.volume),
@@ -65,8 +68,8 @@ export default async function MarketsPage() {
         </h1>
         <p className="text-slate-200">
           Each row shows market-implied probability, how it shifted, and how much
-          liquidity informs the signal. Click through for an LLM-generated
-          explanation of what changed and what remains uncertain.
+          liquidity informs the signal. Click through for a guardrailed explanation
+          generated only after signal-quality checks.
         </p>
       </header>
 

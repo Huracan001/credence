@@ -1,8 +1,9 @@
 export type Market = {
   id: string;
   question: string;
-  probability: number; // 0-1
-  volume: number; // in USD if available
+  probability: number; // normalized probability in [0,1]
+  rawProbability: number; // raw price-derived probability with full precision
+  volume: number; // liquidity proxy (USD)
   updatedAt: string; // ISO string
   bestBid?: number | null;
   bestAsk?: number | null;
@@ -11,16 +12,27 @@ export type Market = {
   assetId?: string | null; // CoinGecko id if detected
   priceUsd?: number | null;
   priceChange24h?: number | null;
-  displayProbability?: number; // 0-1 after clamping for UI
-  probabilityLabel?: string;
+  displayProbability: number; // UI-safe clamped value
+  probabilityLabel: string;
+  probabilityChange24h?: number | null;
+  probabilityChange7d?: number | null;
+  meaningfulMove?: boolean;
   confidenceScore?: number;
   confidenceLabel?: "low" | "medium" | "high";
   confidenceExplanation?: string;
+  confidenceBreakdown?: {
+    liquidityScore: number;
+    tradeActivityScore: number;
+    priceStabilityScore: number;
+    spreadScore: number;
+    recencyScore: number;
+  };
   liquidityPercentile?: number;
-  delta24h?: number | null;
-  delta7d?: number | null;
-  meaningfulMove?: boolean;
+  liquidityLabel?: "Thin" | "Moderate" | "Deep";
   liquidityBar?: string;
+  tradeActivitySummary?: string;
+  explanationEligible?: boolean;
+  explanationRefusal?: string;
   explanationContext?: ExplanationContext;
 };
 
@@ -56,11 +68,14 @@ export type ExplanationContext = {
   eventTitle: string;
   currentProbability: number;
   probabilityChange24h: number | null;
-  liquidity: number;
-  liquidityChange: number | null;
+  probabilityChange7d: number | null;
   confidenceScore: number | null;
-  timeToExpiry: number | null;
-  tradeActivitySummary: string | null;
+  confidenceLabel: "High" | "Medium" | "Low" | null;
+  liquidityUsd: number | null;
+  liquidityLabel: "Thin" | "Moderate" | "Deep" | null;
   liquidityPercentile?: number | null;
+  tradeActivitySummary: string | null;
+  timeToExpiry: number | null;
+  relatedMarketsSummary: string | null;
 };
 

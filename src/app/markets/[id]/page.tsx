@@ -51,8 +51,17 @@ export default async function MarketDetail({ params }: Props) {
 
   // If a shift exists, ensure an insight is available (deterministic fallback)
   let insight = latestShift ? await getLatestInsight(market.id) : null;
-  if (!insight && latestShift) {
-    insight = await generateGuardedInsight(market, latestShift);
+  let explanationRefusal: string | undefined;
+  if (!insight) {
+    const result = await generateGuardedInsight(market, latestShift ?? null);
+    if (result.insight) {
+      insight = result.insight;
+    } else {
+      explanationRefusal =
+        result.refusal ??
+        market.explanationRefusal ??
+        "This market has insufficient liquidity or activity to support a reliable explanation.";
+    }
   }
 
   return (
@@ -81,13 +90,20 @@ export default async function MarketDetail({ params }: Props) {
               }
             />
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-              {market.delta24h !== null && market.delta24h !== undefined ? (
-                <ChangeIndicator value={market.delta24h} label="24h" emphasize />
+              {market.probabilityChange24h !== null &&
+              market.probabilityChange24h !== undefined ? (
+                <ChangeIndicator value={market.probabilityChange24h} label="24h" emphasize />
               ) : (
                 <ChangeIndicator value={latestShift?.delta ?? 0} label="latest shift" />
               )}
               <span className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200">
-                Liquidity: ~${Math.round(market.volume).toLocaleString()}
+                Liquidity: ~${Math.round(market.volume).toLocaleString()} ({market.liquidityLabel ?? "Thin"})
+              </span>
+              <span
+                className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200"
+                title={`Liquidity percentile: ${market.liquidityPercentile ?? 0}%`}
+              >
+                {market.liquidityBar ?? "██░░░"} depth signal
               </span>
               <span className="rounded-full bg-slate-800/70 px-2 py-1 text-xs uppercase tracking-wide text-slate-200">
                 Updated {dateFormatter.format(new Date(market.updatedAt))}
@@ -136,6 +152,11 @@ export default async function MarketDetail({ params }: Props) {
 
       {insight ? (
         <InsightSections insight={insight} />
+      ) : explanationRefusal ? (
+        <div className="glass-panel p-4">
+          <p className="text-sm font-semibold text-white">Explanation withheld</p>
+          <p className="text-sm text-slate-200">{explanationRefusal}</p>
+        </div>
       ) : (
         <div className="glass-panel p-4">
           <p className="text-sm font-semibold text-white">No shift detected yet</p>

@@ -43,14 +43,17 @@ export default async function Home() {
   const fallbackShifts: BeliefShiftDisplay[] = hasRealShifts
     ? []
     : snapshot.markets
-        .filter((m) => m.delta24h !== null && m.delta24h !== undefined)
-        .sort((a, b) => Math.abs(b.delta24h ?? 0) - Math.abs(a.delta24h ?? 0))
+        .filter((m) => m.probabilityChange24h !== null && m.probabilityChange24h !== undefined)
+        .sort(
+          (a, b) =>
+            Math.abs(b.probabilityChange24h ?? 0) - Math.abs(a.probabilityChange24h ?? 0),
+        )
         .slice(0, FALLBACK_TOP_MOVERS)
         .map((m) => ({
           marketId: m.id,
-          previousProbability: m.probability - (m.delta24h ?? 0),
+          previousProbability: m.probability - (m.probabilityChange24h ?? 0),
           currentProbability: m.probability,
-          delta: m.delta24h ?? 0,
+          delta: m.probabilityChange24h ?? 0,
           detectedAt: m.updatedAt,
           question: m.question,
           confidence: confidenceFromVolume(m.volume),
@@ -107,12 +110,12 @@ export default async function Home() {
                   We source event-focused probabilities from prediction markets.
                 </li>
                 <li className="rounded-lg bg-white/5 px-3 py-2">
-                  An LLM translates market moves into plain-language context with
-                  strict guardrails.
+                  A guardrailed ElizaOS agent translates market moves into plain-language
+                  context after liquidity and confidence checks.
                 </li>
                 <li className="rounded-lg bg-white/5 px-3 py-2">
                   We highlight what changed, why it may have changed, and what is
-                  still uncertain.
+                  still uncertain—refusing to speculate when signals are thin.
                 </li>
               </ul>
             </div>
@@ -146,6 +149,8 @@ export default async function Home() {
                       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
                         <ProbabilityBadge
                           probability={market.probability}
+                          displayProbability={market.displayProbability}
+                          probabilityLabel={market.probabilityLabel}
                           confidence={confidenceFromVolume(market.volume)}
                         />
                       </div>

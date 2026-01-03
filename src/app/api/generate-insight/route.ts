@@ -33,9 +33,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(existing, { status: 200 });
     }
 
-    const insight = await generateGuardedInsight(market, shift);
-    await saveInsight(insight);
-    return NextResponse.json(insight, { status: 200 });
+    const insightResult = await generateGuardedInsight(market, shift);
+    if (!insightResult.insight) {
+      return NextResponse.json(
+        {
+          error:
+            insightResult.refusal ??
+            "This market has insufficient liquidity or activity to support a reliable explanation.",
+        },
+        { status: 400 },
+      );
+    }
+
+    await saveInsight(insightResult.insight);
+    return NextResponse.json(insightResult.insight, { status: 200 });
   } catch (err) {
     console.error("[api/generate-insight] failed", err);
     return NextResponse.json(

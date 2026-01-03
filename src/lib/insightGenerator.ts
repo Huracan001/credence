@@ -1,76 +1,144 @@
-import { BeliefShift, Market, StoredInsight } from "@/types";
+import { BeliefShift, ExplanationContext, Market, StoredInsight } from "@/types";
+import { getFromCache, setCache } from "@/lib/cache";
+import { buildExplanationContext, evaluateExplanationEligibility } from "@/lib/metrics";
+import { getMarketHistory } from "@/lib/elizaAgent";
 
 const SYSTEM_PROMPT = `
-You translate prediction market probability moves into cautious, explainable insights.
-- Never provide financial advice or recommendations.
-- Use probabilistic language: likely, unlikely, uncertain, moderately confident.
-- Always mention uncertainty and liquidity/volume context when available.
-- Do not promise outcomes or use hype language.
-- If information is insufficient, state that explicitly.
+You act as the ElizaOS explanation agent. Your role is to translate existing market signals into cautious, neutral, analyst-grade narrative. Rules:
+- Do NOT forecast or invent probabilities.
+- Describe only observed changes and concrete signals.
+- Always surface uncertainty and liquidity context.
+- Refuse to speculate when signals are weak.
+- Tone: analytical, calm, non-sensational.
 `.trim();
+
+const EXPLANATION_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export type GuardedInsightResult = {
+  insight: StoredInsight | null;
+  refusal?: string;
+  context: ExplanationContext;
+  cached: boolean;
+};
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  return `{${entries.map(([k, v]) => `"${k}":${stableStringify(v)}`).join(",")}}`;
+}
 
 function formatPercent(probability: number) {
   return `${Math.round(probability * 100)}%`;
 }
 
-function descriptor(probability: number) {
-  if (probability >= 0.75) return "likely";
-  if (probability >= 0.6) return "more likely than not";
-  if (probability >= 0.4) return "uncertain";
-  return "unlikely";
-}
-
-function buildDeterministicInsight(
+function renderDeterministicInsight(
   market: Market,
-  shift: BeliefShift,
-  context?: { volume?: number },
+  context: ExplanationContext,
+  shift?: BeliefShift | null,
 ): StoredInsight {
-  const volumeCopy =
-    context?.volume !== undefined
-      ? `Observed volume: ~$${Math.round(context.volume).toLocaleString()}.`
-      : "Volume context not available.";
+  const movement24h =
+    context.probabilityChange24h !== null && context.probabilityChange24h !== undefined
+      ? `${context.probabilityChange24h > 0 ? "+" : ""}${(context.probabilityChange24h * 100).toFixed(1)} pts`
+      : "not available";
+  const movement7d =
+    context.probabilityChange7d !== null && context.probabilityChange7d !== undefined
+      ? `${context.probabilityChange7d > 0 ? "+" : ""}${(context.probabilityChange7d * 100).toFixed(1)} pts`
+      : "not available";
+  const confidenceText = context.confidenceScore !== null && context.confidenceScore !== undefined
+    ? `${context.confidenceLabel ?? "Unknown"} (${context.confidenceScore.toFixed(0)})`
+    : "Unknown";
+  const liquidityText =
+    context.liquidityUsd !== null && context.liquidityUsd !== undefined
+      ? `Liquidity: ~$${Math.round(context.liquidityUsd).toLocaleString()} (${context.liquidityLabel ?? "Thin"}).`
+      : "Liquidity not available.";
 
-  const direction = shift.delta > 0 ? "up" : shift.delta < 0 ? "down" : "flat";
+  const shiftDetectedAt = shift?.detectedAt ?? market.updatedAt ?? new Date().toISOString();
 
   return {
-    id: `${market.id}-${shift.detectedAt}`,
+    id: `${market.id}-${shiftDetectedAt}`,
     marketId: market.id,
-    shiftDetectedAt: shift.detectedAt,
+    shiftDetectedAt,
     summary: `The market assigns ${formatPercent(
-      market.probability,
-    )} to "${market.question}", viewed as ${descriptor(market.probability)}.`,
+      context.currentProbability,
+    )} to "${context.eventTitle}", treated as ${context.confidenceLabel ?? "Unknown"} confidence.`,
     whatChanged: [
-      `Probability moved ${direction} by ${(Math.abs(shift.delta) * 100).toFixed(1)} pts.`,
-      `Previous probability: ${formatPercent(shift.previousProbability)}; current: ${formatPercent(
-        shift.currentProbability,
-      )}.`,
+      `24h change: ${movement24h}; 7d change: ${movement7d}.`,
+      context.tradeActivitySummary ?? "Recent trading activity is being monitored.",
     ],
     whyMoved: [
-      "No model-based rationale provided; this is a structural summary of observed trading.",
-      volumeCopy,
+      "Explanation references observed order book and trading activity only.",
+      liquidityText,
     ],
     uncertainty: [
-      "Drivers behind the shift are not fully identified in this response.",
-      "Outcome can still move materially if new information arrives or liquidity is thin.",
+      "Drivers behind the shift are not inferred; this is a translation of current market signals.",
+      "Future movement may differ if new information arrives or liquidity remains thin.",
     ],
     interpretation:
-      "This is an interpretation of current sentiment, not advice or a forecast. Treat it as directional context only.",
+      "This is a market-implied view, not a forecast or recommendation. Treat it as directional context with stated confidence.",
     createdAt: new Date().toISOString(),
   };
 }
 
-/**
- * Placeholder guarded generator. If OPENAI_API_KEY is present, the function is ready
- * to be extended to call a model. Without a key, it returns a deterministic,
- * cautious insight to keep behavior predictable and safe.
- */
 export async function generateGuardedInsight(
   market: Market,
-  shift: BeliefShift,
-): Promise<StoredInsight> {
-  // TODO: Wire to an LLM provider with SYSTEM_PROMPT once a key is provided.
-  // Keep deterministic output for now to avoid unguarded responses.
-  return buildDeterministicInsight(market, shift, { volume: market.volume });
+  shift?: BeliefShift | null,
+): Promise<GuardedInsightResult> {
+  let context =
+    market.explanationContext ??
+    buildExplanationContext({
+      market,
+      probabilityChange24h: market.probabilityChange24h ?? null,
+      probabilityChange7d: market.probabilityChange7d ?? null,
+      liquidityPercentile: market.liquidityPercentile ?? null,
+      confidenceScore: market.confidenceScore ?? null,
+      confidenceLabel: market.confidenceLabel ?? null,
+      timeToExpiry: null,
+      tradeActivitySummary: market.tradeActivitySummary,
+    });
+
+  if (!context.tradeActivitySummary) {
+    const history = await getMarketHistory(market.id);
+    const recentEvents = history.slice(0, 3).map((entry) => entry.detectedAt);
+    context = {
+      ...context,
+      tradeActivitySummary: recentEvents.length
+        ? `Recent activity timestamps: ${recentEvents.join(", ")}`
+        : "No recent activity detected in history window.",
+    };
+  }
+
+  const eligibility = evaluateExplanationEligibility({
+    confidenceScore: market.confidenceScore ?? null,
+    liquidity: market.volume,
+    recentActivity:
+      market.meaningfulMove === true ||
+      Boolean(market.probabilityChange24h || market.probabilityChange7d || shift),
+    stale: false,
+  });
+
+  if (!eligibility.eligible) {
+    return {
+      insight: null,
+      refusal:
+        eligibility.reason ??
+        "This market has insufficient liquidity or activity to support a reliable explanation.",
+      context,
+      cached: false,
+    };
+  }
+
+  const cacheKey = `explanation:${market.id}:${stableStringify(context)}`;
+  const cached = getFromCache<StoredInsight>(cacheKey);
+  if (cached) {
+    return { insight: cached, context, cached: true };
+  }
+
+  const insight = renderDeterministicInsight(market, context, shift ?? null);
+  setCache(cacheKey, insight, EXPLANATION_TTL_MS);
+  return { insight, context, cached: false };
 }
 
 export const insightSystemPrompt = SYSTEM_PROMPT;

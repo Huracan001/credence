@@ -1,4 +1,5 @@
 import { Market } from "@/types";
+import { normalizeProbability } from "@/lib/metrics";
 
 // Gamma API provides richer fields; prefer it over clob where possible.
 const POLYMARKET_URL =
@@ -85,6 +86,7 @@ function normalizeMarket(raw: PolymarketMarket): Market | null {
   const yesIndex = findYesIndex(outcomes);
   const probability = pickProbability(raw, yesIndex, outcomePrices);
   if (probability === null) return null;
+  const normalized = normalizeProbability(probability);
 
   const question = raw.question ?? raw.title ?? "Untitled market";
   const volume24h = toNumber(raw.volume24h);
@@ -129,7 +131,10 @@ function normalizeMarket(raw: PolymarketMarket): Market | null {
   return {
     id: raw.id ?? question.toLowerCase().replace(/\s+/g, "-").slice(0, 40),
     question,
-    probability,
+    probability: normalized.rawProbability,
+    rawProbability: normalized.rawProbability,
+    displayProbability: normalized.displayProbability,
+    probabilityLabel: normalized.probabilityLabel,
     volume: volume ?? 0,
     volume24h: volume24h ?? null,
     bestBid,

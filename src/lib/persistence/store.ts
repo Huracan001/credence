@@ -1,4 +1,5 @@
 import { BeliefShift, Market, StoredInsight } from "@/types";
+import { clampDisplayProbability, probabilityLabel } from "@/lib/metrics";
 import { withDb } from "./db";
 
 type MarketRow = {
@@ -10,12 +11,20 @@ type MarketRow = {
 };
 
 function mapMarketRow(row: MarketRow): Market {
+  const rawProbability = row.probability;
+  const displayProbability = clampDisplayProbability(rawProbability);
   return {
     id: row.id,
     question: row.question,
-    probability: row.probability,
+    probability: rawProbability,
+    rawProbability,
+    displayProbability,
+    probabilityLabel: probabilityLabel(displayProbability),
     volume: row.volume ?? 0,
     updatedAt: row.updatedAt,
+    probabilityChange24h: null,
+    probabilityChange7d: null,
+    meaningfulMove: false,
   };
 }
 
