@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     const filters = parseFilters(req);
     const force = new URL(req.url).searchParams.get("force") === "true";
     const data = await getMarketsSnapshot({ forceRefresh: force });
-    const filtered = data.markets.filter((m) => passesFilters(m, filters));
+    const filtered = data.markets.filter((m: any) => passesFilters(m, filters));
 
     return NextResponse.json(
       {
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     try {
       const filters = parseFilters(req);
       const data = await refreshMarkets();
-      const filtered = data.markets.filter((m) => passesFilters(m, filters));
+      const filtered = data.markets.filter((m: any) => passesFilters(m, filters));
       return NextResponse.json(
         {
           markets: filtered,
