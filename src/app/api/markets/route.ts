@@ -9,7 +9,6 @@ type Filters = ReturnType<typeof parseFilters>;
 function parseFilters(req: NextRequest) {
   const url = new URL(req.url);
   const confidence = url.searchParams.get("confidence");
-  const minLiquidity = url.searchParams.get("minLiquidity");
   const probMin = url.searchParams.get("probMin");
   const probMax = url.searchParams.get("probMax");
 
@@ -18,7 +17,6 @@ function parseFilters(req: NextRequest) {
       confidence === "high" || confidence === "medium" || confidence === "low"
         ? confidence
         : undefined,
-    minLiquidity: minLiquidity ? Number(minLiquidity) : undefined,
     probMin: probMin ? Number(probMin) : undefined,
     probMax: probMax ? Number(probMax) : undefined,
   };
