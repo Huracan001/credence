@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMarketsSnapshot, refreshMarkets } from "@/lib/server/markets";
-import { Market } from "@/types/market";
+import type { Market } from "@/types/market";
 
 export const revalidate = 0; // always fresh
 
@@ -50,7 +50,8 @@ export async function GET(req: NextRequest) {
     const filters = parseFilters(req);
     const force = new URL(req.url).searchParams.get("force") === "true";
     const data = await getMarketsSnapshot({ forceRefresh: force });
-    const filtered = data.markets.filter((m: any) => passesFilters(m, filters));
+    const markets = data.markets as Market[];
+    const filtered = markets.filter((m: Market) => passesFilters(m, filters));
 
     return NextResponse.json(
       {
@@ -70,7 +71,8 @@ export async function GET(req: NextRequest) {
     try {
       const filters = parseFilters(req);
       const data = await refreshMarkets();
-      const filtered = data.markets.filter((m: any) => passesFilters(m, filters));
+      const markets = data.markets as Market[];
+      const filtered = markets.filter((m: Market) => passesFilters(m, filters));
       return NextResponse.json(
         {
           markets: filtered,
