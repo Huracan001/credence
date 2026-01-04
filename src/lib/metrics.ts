@@ -1,4 +1,4 @@
-import { BeliefShift, Market } from "@/types";
+import { BeliefShift, ExplanationContext, Market } from "@/types";
 
 type ConfidenceInputs = {
   liquidity: number;
@@ -191,24 +191,27 @@ export function buildExplanationContext(params: {
   timeToExpiry?: number | null;
   tradeActivitySummary?: string;
   relatedMarketsSummary?: string | null;
-}) {
+}): ExplanationContext {
   const displayProbability = clampDisplayProbability(params.market.probability);
   const liquidityLabel = params.liquidityPercentile !== null && params.liquidityPercentile !== undefined
     ? liquidityLabelForPercentile(params.liquidityPercentile)
     : "Thin";
+  
+  const confidenceLabel: "High" | "Medium" | "Low" | null = params.confidenceLabel
+    ? (params.confidenceLabel === "high"
+        ? "High"
+        : params.confidenceLabel === "medium"
+          ? "Medium"
+          : "Low")
+    : null;
+  
   return {
     eventTitle: params.market.question,
     currentProbability: displayProbability,
     probabilityChange24h: params.probabilityChange24h,
     probabilityChange7d: params.probabilityChange7d,
     confidenceScore: params.confidenceScore,
-    confidenceLabel: params.confidenceLabel
-      ? (params.confidenceLabel === "high"
-          ? "High"
-          : params.confidenceLabel === "medium"
-            ? "Medium"
-            : "Low")
-      : null,
+    confidenceLabel,
     liquidityUsd: params.market.volume,
     liquidityLabel,
     liquidityPercentile: params.liquidityPercentile,

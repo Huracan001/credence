@@ -3,6 +3,15 @@ import { getFromCache, setCache } from "@/lib/cache";
 import { buildExplanationContext } from "@/lib/metrics";
 import { getMarketHistory } from "@/lib/elizaAgent";
 
+type ConfidenceLabel = "High" | "Medium" | "Low" | null;
+
+function toConfidenceLabel(score: number | null): ConfidenceLabel {
+  if (score == null) return null;
+  if (score >= 70) return "High";
+  if (score >= 40) return "Medium";
+  return "Low";
+}
+
 const SYSTEM_PROMPT = `
 You act as the ElizaOS explanation agent. Your role is to translate existing market signals into cautious, neutral, analyst-grade narrative. Rules:
 - Do NOT forecast or invent probabilities.
@@ -86,28 +95,54 @@ export async function generateGuardedInsight(
   market: Market,
   shift?: BeliefShift | null,
 ): Promise<GuardedInsightResult> {
-  let context: ExplanationContext =
-    market.explanationContext ??
-    buildExplanationContext({
-      market,
-      probabilityChange24h: market.probabilityChange24h ?? null,
-      probabilityChange7d: market.probabilityChange7d ?? null,
-      liquidityPercentile: market.liquidityPercentile ?? null,
-      confidenceScore: market.confidenceScore ?? null,
-      confidenceLabel: market.confidenceLabel ?? null,
-      timeToExpiry: null,
-      tradeActivitySummary: market.tradeActivitySummary,
-    }) as ExplanationContext;
+  // Build context with strict typing
+  const builtContext = market.explanationContext ?? buildExplanationContext({
+    market,
+    probabilityChange24h: market.probabilityChange24h ?? null,
+    probabilityChange7d: market.probabilityChange7d ?? null,
+    liquidityPercentile: market.liquidityPercentile ?? null,
+    confidenceScore: market.confidenceScore ?? null,
+    confidenceLabel: market.confidenceLabel ?? null,
+    timeToExpiry: null,
+    tradeActivitySummary: market.tradeActivitySummary,
+  });
+
+  // Ensure strict type by rebuilding with explicit ConfidenceLabel conversion
+  let context: ExplanationContext = {
+    eventTitle: builtContext.eventTitle,
+    currentProbability: builtContext.currentProbability,
+    probabilityChange24h: builtContext.probabilityChange24h,
+    probabilityChange7d: builtContext.probabilityChange7d,
+    confidenceScore: builtContext.confidenceScore,
+    confidenceLabel: toConfidenceLabel(builtContext.confidenceScore),
+    liquidityUsd: builtContext.liquidityUsd,
+    liquidityLabel: builtContext.liquidityLabel,
+    liquidityPercentile: builtContext.liquidityPercentile ?? null,
+    timeToExpiry: builtContext.timeToExpiry,
+    tradeActivitySummary: builtContext.tradeActivitySummary,
+    relatedMarketsSummary: builtContext.relatedMarketsSummary ?? null,
+  };
 
   if (!context.tradeActivitySummary) {
     const history = await getMarketHistory(market.id);
     const recentEvents = history.slice(0, 3).map((entry) => entry.detectedAt);
+    // Rebuild context with strict typing
     context = {
-      ...context,
+      eventTitle: context.eventTitle,
+      currentProbability: context.currentProbability,
+      probabilityChange24h: context.probabilityChange24h,
+      probabilityChange7d: context.probabilityChange7d,
+      confidenceScore: context.confidenceScore,
+      confidenceLabel: context.confidenceLabel,
+      liquidityUsd: context.liquidityUsd,
+      liquidityLabel: context.liquidityLabel,
+      liquidityPercentile: context.liquidityPercentile,
+      timeToExpiry: context.timeToExpiry,
       tradeActivitySummary: recentEvents.length
         ? `Recent activity timestamps: ${recentEvents.join(", ")}`
         : "No recent activity detected in history window.",
-    } as ExplanationContext;
+      relatedMarketsSummary: context.relatedMarketsSummary,
+    };
   }
 
   const cacheKey = `explanation:${market.id}:${stableStringify(context)}`;
@@ -122,4 +157,3 @@ export async function generateGuardedInsight(
 }
 
 export const insightSystemPrompt = SYSTEM_PROMPT;
-
