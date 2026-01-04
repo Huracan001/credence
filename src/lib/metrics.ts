@@ -226,32 +226,28 @@ export function evaluateExplanationEligibility(params: {
   liquidity?: number | null;
   recentActivity?: boolean;
   stale?: boolean;
-}): { eligible: boolean; reason?: string } {
+}): { eligible: boolean } {
   if (params.stale) {
     return {
       eligible: false,
-      reason: "This market appears stale or expired; no explanation generated.",
     };
   }
 
   if (params.confidenceScore !== undefined && params.confidenceScore !== null && params.confidenceScore < 40) {
     return {
       eligible: false,
-      reason: "Confidence is below the minimum threshold required for an explanation.",
     };
   }
 
   if (params.liquidity !== undefined && params.liquidity !== null && params.liquidity < 1000) {
     return {
       eligible: false,
-      reason: "This market has insufficient liquidity or activity to support a reliable explanation.",
     };
   }
 
   if (params.recentActivity === false) {
     return {
       eligible: false,
-      reason: "No recent trading activity detected; explanation withheld.",
     };
   }
 

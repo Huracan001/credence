@@ -22,10 +22,7 @@ export async function GET(
     if (!result.insight) {
       return NextResponse.json(
         {
-          refusal:
-            result.refusal ??
-            market.explanationRefusal ??
-            "This market has insufficient liquidity or activity to support a reliable explanation.",
+          error: "Unable to generate explanation for this market.",
           context: result.context,
           cached: result.cached,
         },

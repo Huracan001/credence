@@ -37,9 +37,7 @@ export async function POST(req: NextRequest) {
     if (!insightResult.insight) {
       return NextResponse.json(
         {
-          error:
-            insightResult.refusal ??
-            "This market has insufficient liquidity or activity to support a reliable explanation.",
+          error: "Unable to generate insight for this market.",
         },
         { status: 400 },
       );

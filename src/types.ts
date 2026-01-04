@@ -31,8 +31,6 @@ export type Market = {
   liquidityLabel?: "Thin" | "Moderate" | "Deep";
   liquidityBar?: string;
   tradeActivitySummary?: string;
-  explanationEligible?: boolean;
-  explanationRefusal?: string;
   explanationContext?: ExplanationContext;
 };
 

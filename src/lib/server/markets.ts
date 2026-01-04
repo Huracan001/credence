@@ -15,7 +15,6 @@ import {
   computeLiquidityPercentiles,
   computeVolatility,
   computeProbabilityChanges,
-  evaluateExplanationEligibility,
   formatLiquidityBar,
   liquidityLabelForPercentile,
   normalizeProbability,
@@ -182,16 +181,6 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
       const tradeActivitySummary = `Trades flagged in 24h: ${tradeFrequency24h}; volatility ${
         volatility !== null ? (volatility * 100).toFixed(1) : "n/a"
       } pts`;
-      const stale =
-        Number.isFinite(new Date(market.updatedAt).getTime()) &&
-        new Date(market.updatedAt).getTime() < now.getTime() - 3 * 24 * 60 * 60 * 1000;
-      const eligibility = evaluateExplanationEligibility({
-        confidenceScore,
-        liquidity: market.volume,
-        recentActivity: tradeFrequency24h > 0 || meaningfulMove,
-        stale,
-      });
-
       const enrichedMarket: Market = {
         ...market,
         rawProbability: normalizedProb.rawProbability,
@@ -212,8 +201,6 @@ export async function enrichMarkets(markets: Market[]): Promise<Market[]> {
         probabilityChange7d,
         meaningfulMove,
         tradeActivitySummary,
-        explanationEligible: eligibility.eligible,
-        explanationRefusal: eligibility.reason,
       };
 
       return {

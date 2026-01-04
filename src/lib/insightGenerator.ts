@@ -1,7 +1,6 @@
 import { BeliefShift, ExplanationContext, Market, StoredInsight } from "@/types";
 import { getFromCache, setCache } from "@/lib/cache";
 import { buildExplanationContext } from "@/lib/metrics";
-import { getMarketHistory } from "@/lib/elizaAgent";
 
 type ConfidenceLabel = "High" | "Medium" | "Low" | null;
 
@@ -16,8 +15,6 @@ const SYSTEM_PROMPT = `
 You act as the ElizaOS explanation agent. Your role is to translate existing market signals into cautious, neutral, analyst-grade narrative. Rules:
 - Do NOT forecast or invent probabilities.
 - Describe only observed changes and concrete signals.
-- Always surface uncertainty and liquidity context.
-- Refuse to speculate when signals are weak.
 - Tone: analytical, calm, non-sensational.
 `.trim();
 
@@ -25,7 +22,6 @@ const EXPLANATION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export type GuardedInsightResult = {
   insight: StoredInsight | null;
-  refusal?: string;
   context: ExplanationContext;
   cached: boolean;
 };
@@ -83,7 +79,6 @@ function renderDeterministicInsight(
     ],
     uncertainty: [
       "Drivers behind the shift are not inferred; this is a translation of current market signals.",
-      "Future movement may differ if new information arrives or liquidity remains thin.",
     ],
     interpretation:
       "This is a market-implied view, not a forecast or recommendation. Treat it as directional context with stated confidence.",
@@ -95,8 +90,8 @@ export async function generateGuardedInsight(
   market: Market,
   shift?: BeliefShift | null,
 ): Promise<GuardedInsightResult> {
-  // Build context with strict typing
-  const builtContext = market.explanationContext ?? buildExplanationContext({
+  // Build context with strict typing - always rebuild to ensure strict types
+  const builtContext = buildExplanationContext({
     market,
     probabilityChange24h: market.probabilityChange24h ?? null,
     probabilityChange7d: market.probabilityChange7d ?? null,
@@ -108,7 +103,7 @@ export async function generateGuardedInsight(
   });
 
   // Ensure strict type by rebuilding with explicit ConfidenceLabel conversion
-  let context: ExplanationContext = {
+  const context: ExplanationContext = {
     eventTitle: builtContext.eventTitle,
     currentProbability: builtContext.currentProbability,
     probabilityChange24h: builtContext.probabilityChange24h,
@@ -122,28 +117,6 @@ export async function generateGuardedInsight(
     tradeActivitySummary: builtContext.tradeActivitySummary,
     relatedMarketsSummary: builtContext.relatedMarketsSummary ?? null,
   };
-
-  if (!context.tradeActivitySummary) {
-    const history = await getMarketHistory(market.id);
-    const recentEvents = history.slice(0, 3).map((entry) => entry.detectedAt);
-    // Rebuild context with strict typing
-    context = {
-      eventTitle: context.eventTitle,
-      currentProbability: context.currentProbability,
-      probabilityChange24h: context.probabilityChange24h,
-      probabilityChange7d: context.probabilityChange7d,
-      confidenceScore: context.confidenceScore,
-      confidenceLabel: context.confidenceLabel,
-      liquidityUsd: context.liquidityUsd,
-      liquidityLabel: context.liquidityLabel,
-      liquidityPercentile: context.liquidityPercentile,
-      timeToExpiry: context.timeToExpiry,
-      tradeActivitySummary: recentEvents.length
-        ? `Recent activity timestamps: ${recentEvents.join(", ")}`
-        : "No recent activity detected in history window.",
-      relatedMarketsSummary: context.relatedMarketsSummary,
-    };
-  }
 
   const cacheKey = `explanation:${market.id}:${stableStringify(context)}`;
   const cached = getFromCache<StoredInsight>(cacheKey);

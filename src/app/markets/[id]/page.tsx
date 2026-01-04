@@ -51,16 +51,10 @@ export default async function MarketDetail({ params }: Props) {
 
   // If a shift exists, ensure an insight is available (deterministic fallback)
   let insight = latestShift ? await getLatestInsight(market.id) : null;
-  let explanationRefusal: string | undefined;
-  if (!insight) {
-    const result = await generateGuardedInsight(market, latestShift ?? null);
+  if (!insight && latestShift) {
+    const result = await generateGuardedInsight(market, latestShift);
     if (result.insight) {
       insight = result.insight;
-    } else {
-      explanationRefusal =
-        result.refusal ??
-        market.explanationRefusal ??
-        "This market has insufficient liquidity or activity to support a reliable explanation.";
     }
   }
 
@@ -152,11 +146,6 @@ export default async function MarketDetail({ params }: Props) {
 
       {insight ? (
         <InsightSections insight={insight} />
-      ) : explanationRefusal ? (
-        <div className="glass-panel p-4">
-          <p className="text-sm font-semibold text-white">Explanation withheld</p>
-          <p className="text-sm text-slate-200">{explanationRefusal}</p>
-        </div>
       ) : (
         <div className="glass-panel p-4">
           <p className="text-sm font-semibold text-white">No shift detected yet</p>
