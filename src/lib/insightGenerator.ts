@@ -1,6 +1,6 @@
 import { BeliefShift, ExplanationContext, Market, StoredInsight } from "@/types";
 import { getFromCache, setCache } from "@/lib/cache";
-import { buildExplanationContext, evaluateExplanationEligibility } from "@/lib/metrics";
+import { buildExplanationContext } from "@/lib/metrics";
 import { getMarketHistory } from "@/lib/elizaAgent";
 
 const SYSTEM_PROMPT = `
@@ -86,7 +86,7 @@ export async function generateGuardedInsight(
   market: Market,
   shift?: BeliefShift | null,
 ): Promise<GuardedInsightResult> {
-  let context =
+  let context: ExplanationContext =
     market.explanationContext ??
     buildExplanationContext({
       market,
@@ -97,7 +97,7 @@ export async function generateGuardedInsight(
       confidenceLabel: market.confidenceLabel ?? null,
       timeToExpiry: null,
       tradeActivitySummary: market.tradeActivitySummary,
-    });
+    }) as ExplanationContext;
 
   if (!context.tradeActivitySummary) {
     const history = await getMarketHistory(market.id);
@@ -107,27 +107,7 @@ export async function generateGuardedInsight(
       tradeActivitySummary: recentEvents.length
         ? `Recent activity timestamps: ${recentEvents.join(", ")}`
         : "No recent activity detected in history window.",
-    };
-  }
-
-  const eligibility = evaluateExplanationEligibility({
-    confidenceScore: market.confidenceScore ?? null,
-    liquidity: market.volume,
-    recentActivity:
-      market.meaningfulMove === true ||
-      Boolean(market.probabilityChange24h || market.probabilityChange7d || shift),
-    stale: false,
-  });
-
-  if (!eligibility.eligible) {
-    return {
-      insight: null,
-      refusal:
-        eligibility.reason ??
-        "This market has insufficient liquidity or activity to support a reliable explanation.",
-      context,
-      cached: false,
-    };
+    } as ExplanationContext;
   }
 
   const cacheKey = `explanation:${market.id}:${stableStringify(context)}`;
