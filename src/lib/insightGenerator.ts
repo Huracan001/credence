@@ -1,6 +1,7 @@
 import { BeliefShift, ExplanationContext, Market, StoredInsight } from "@/types";
 import { getFromCache, setCache } from "@/lib/cache";
 import { buildExplanationContext } from "@/lib/metrics";
+import { aggregateContext, EnrichedContext } from "@/lib/contextAggregator";
 
 type ConfidenceLabel = "High" | "Medium" | "Low" | null;
 
@@ -43,6 +44,7 @@ function renderDeterministicInsight(
   market: Market,
   context: ExplanationContext,
   shift?: BeliefShift | null,
+  enrichedContext?: EnrichedContext | null,
 ): StoredInsight {
   const movement24h =
     context.probabilityChange24h !== null && context.probabilityChange24h !== undefined
@@ -62,23 +64,81 @@ function renderDeterministicInsight(
 
   const shiftDetectedAt = shift?.detectedAt ?? market.updatedAt ?? new Date().toISOString();
 
+  // Build whyMoved with enriched context
+  const whyMoved: string[] = [];
+  
+  if (enrichedContext) {
+    // Add news context
+    if (enrichedContext.news.length > 0) {
+      const recentNews = enrichedContext.news.filter(
+        (n) => new Date(n.publishedAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+      );
+      if (recentNews.length > 0) {
+        whyMoved.push(
+          `Recent news coverage (${recentNews.length} article${recentNews.length > 1 ? "s" : ""}) may be influencing market sentiment.`
+        );
+      }
+    }
+
+    // Add Twitter/X context
+    if (enrichedContext.tweets.length > 0) {
+      const recentTweets = enrichedContext.tweets.filter(
+        (t) => new Date(t.createdAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+      );
+      if (recentTweets.length > 0) {
+        whyMoved.push(
+          `Social media discussion is active (${recentTweets.length} recent post${recentTweets.length > 1 ? "s" : ""}), potentially reflecting broader sentiment shifts.`
+        );
+      }
+    }
+
+    // Add key drivers
+    if (enrichedContext.keyDrivers.length > 0) {
+      whyMoved.push(...enrichedContext.keyDrivers.slice(0, 2));
+    }
+  }
+
+  // Fallback to basic explanation if no enriched context
+  if (whyMoved.length === 0) {
+    whyMoved.push(
+      "Explanation references observed order book and trading activity only.",
+      liquidityText,
+    );
+  } else {
+    whyMoved.push(liquidityText);
+  }
+
+  // Build whatChanged with enriched context
+  const whatChanged: string[] = [
+    `24h change: ${movement24h}; 7d change: ${movement7d}.`,
+  ];
+
+  if (enrichedContext?.relatedMarkets && enrichedContext.relatedMarkets.length > 0) {
+    whatChanged.push(
+      `${enrichedContext.relatedMarkets.length} related market${enrichedContext.relatedMarkets.length > 1 ? "s" : ""} showing similar patterns.`
+    );
+  }
+
+  whatChanged.push(context.tradeActivitySummary ?? "Recent trading activity is being monitored.");
+
+  // Enhanced summary with enriched context
+  let summary = `The market assigns ${formatPercent(
+    context.currentProbability,
+  )} to "${context.eventTitle}", treated as ${context.confidenceLabel ?? "Unknown"} confidence.`;
+  
+  if (enrichedContext?.summary) {
+    summary = enrichedContext.summary;
+  }
+
   return {
     id: `${market.id}-${shiftDetectedAt}`,
     marketId: market.id,
     shiftDetectedAt,
-    summary: `The market assigns ${formatPercent(
-      context.currentProbability,
-    )} to "${context.eventTitle}", treated as ${context.confidenceLabel ?? "Unknown"} confidence.`,
-    whatChanged: [
-      `24h change: ${movement24h}; 7d change: ${movement7d}.`,
-      context.tradeActivitySummary ?? "Recent trading activity is being monitored.",
-    ],
-    whyMoved: [
-      "Explanation references observed order book and trading activity only.",
-      liquidityText,
-    ],
+    summary,
+    whatChanged,
+    whyMoved,
     uncertainty: [
-      "Drivers behind the shift are not inferred; this is a translation of current market signals.",
+      "Drivers behind the shift are inferred from news, social media, and market data. This is a translation of current signals, not a forecast.",
     ],
     interpretation:
       "This is a market-implied view, not a forecast or recommendation. Treat it as directional context with stated confidence.",
@@ -89,6 +149,7 @@ function renderDeterministicInsight(
 export async function generateGuardedInsight(
   market: Market,
   shift?: BeliefShift | null,
+  includeEnrichedContext = true,
 ): Promise<GuardedInsightResult> {
   // Build context with strict typing - always rebuild to ensure strict types
   const builtContext = buildExplanationContext({
@@ -124,7 +185,18 @@ export async function generateGuardedInsight(
     return { insight: cached, context, cached: true };
   }
 
-  const insight = renderDeterministicInsight(market, context, shift ?? null);
+  // Aggregate enriched context from news, Twitter, and Polymarket
+  let enrichedContext: EnrichedContext | null = null;
+  if (includeEnrichedContext) {
+    try {
+      enrichedContext = await aggregateContext(market, shift ?? null);
+    } catch (err) {
+      console.error("[insightGenerator] Failed to aggregate enriched context", err);
+      // Continue with basic insight if enrichment fails
+    }
+  }
+
+  const insight = renderDeterministicInsight(market, context, shift ?? null, enrichedContext);
   setCache(cacheKey, insight, EXPLANATION_TTL_MS);
   return { insight, context, cached: false };
 }

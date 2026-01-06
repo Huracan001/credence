@@ -5,8 +5,10 @@ import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
 import { CategoryBadge, getCategoryFromMarket } from "@/components/CategoryBadge";
 import { getMarketSnapshotById, refreshMarkets } from "@/lib/server/markets";
-import { getLatestBeliefShift, getLatestInsight } from "@/lib/persistence/store";
+import { getLatestBeliefShift, getLatestInsight, listBeliefShiftsForMarket } from "@/lib/persistence/store";
 import { generateGuardedInsight } from "@/lib/insightGenerator";
+import { HistoricalShifts } from "@/components/HistoricalShifts";
+import { EnrichedContextClient } from "@/components/EnrichedContextClient";
 
 export const dynamic = "force-dynamic";
 
@@ -69,11 +71,13 @@ export default async function MarketDetail({ params }: Props) {
   }
 
   const latestShift = await getLatestBeliefShift(market.id);
+  const historicalShifts = await listBeliefShiftsForMarket(market.id, undefined, 20);
 
   // If a shift exists, ensure an insight is available (deterministic fallback)
+  // Use enriched context (news, Twitter, Polymarket) for better explanations
   let insight = latestShift ? await getLatestInsight(market.id) : null;
   if (!insight && latestShift) {
-    const result = await generateGuardedInsight(market, latestShift);
+    const result = await generateGuardedInsight(market, latestShift, true); // Include enriched context
     if (result.insight) {
       insight = result.insight;
     }
@@ -180,6 +184,10 @@ export default async function MarketDetail({ params }: Props) {
           </p>
         </div>
       )}
+
+      <EnrichedContextClient marketId={market.id} />
+
+      <HistoricalShifts shifts={historicalShifts} currentProbability={market.probability} />
 
       <div className="glass-panel p-6 space-y-4 glow-border">
         <p className="text-sm font-black text-[#00d9ff] uppercase tracking-wider flex items-center gap-2">
