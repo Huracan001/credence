@@ -36,12 +36,32 @@ export default async function MarketDetail({ params }: Props) {
 
   if (!market) {
     return (
-      <div className="glass-panel p-6 text-[#6b7280] glow-border">
-        <h1 className="text-2xl font-black tracking-tight text-[#f0f0f0] uppercase">Market unavailable</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[#6b7280]">
-          This market could not be loaded. It may have been delisted or is temporarily
-          unavailable. Return to markets and try another.
-        </p>
+      <div className="space-y-12">
+        <div className="glass-panel p-8 text-[#6b7280] glow-border text-center">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <span className="inline-block w-3 h-3 bg-[#ff0040] rounded-full animate-pulse"></span>
+              <h1 className="text-2xl font-black tracking-tight text-[#f0f0f0] uppercase">Market Unavailable</h1>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-[#6b7280] max-w-md mx-auto">
+              This market could not be loaded. It may have been delisted or is temporarily unavailable.
+            </p>
+            <div className="pt-4 flex gap-3 justify-center">
+              <Link
+                href="/markets"
+                className="border border-[#00d9ff] bg-[#0f1419] px-6 py-3 text-sm font-semibold tracking-wider text-[#00d9ff] uppercase transition-all hover:bg-[#1a1f2e] hover:shadow-[0_0_15px_rgba(0,217,255,0.2)]"
+              >
+                View All Markets →
+              </Link>
+              <Link
+                href="/"
+                className="border border-[#1a1f2e] bg-[#0f1419] px-6 py-3 text-sm font-semibold tracking-wider text-[#6b7280] uppercase transition-all hover:border-[#00d9ff] hover:text-[#00d9ff]"
+              >
+                Home
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

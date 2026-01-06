@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { MarketTable } from "@/components/MarketTable";
 import { getMarketsSnapshot } from "@/lib/server/markets";
@@ -77,9 +78,41 @@ export default async function MarketsPage() {
       {hasMarkets ? (
         <MarketTable markets={snapshot.markets} shifts={snapshot.shifts} />
       ) : (
-        <div className="glass-panel p-6 text-[#6b7280] glow-border">
-          <span className="inline-block w-2 h-2 bg-[#ff0040] rounded-full mr-2 animate-pulse"></span>
-          Markets temporarily unavailable. Data will reload automatically.
+        <div className="glass-panel p-8 text-[#6b7280] glow-border text-center">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <span className="inline-block w-3 h-3 bg-[#ff0040] rounded-full animate-pulse"></span>
+              <h2 className="text-xl font-black text-[#f0f0f0] uppercase tracking-wider">Markets Temporarily Unavailable</h2>
+            </div>
+            <p className="text-sm leading-relaxed text-[#6b7280] max-w-md mx-auto">
+              Unable to fetch market data at this time. This may be due to:
+            </p>
+            <ul className="text-sm text-[#6b7280] space-y-2 max-w-md mx-auto text-left list-none">
+              <li className="flex items-start gap-2">
+                <span className="text-[#00d9ff] mt-1">•</span>
+                <span>API connection issues</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#00d9ff] mt-1">•</span>
+                <span>Data provider temporarily unavailable</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#00d9ff] mt-1">•</span>
+                <span>Network connectivity problems</span>
+              </li>
+            </ul>
+            <div className="pt-4">
+              <Link
+                href="/"
+                className="inline-block border border-[#00d9ff] bg-[#0f1419] px-6 py-3 text-sm font-semibold tracking-wider text-[#00d9ff] uppercase transition-all hover:bg-[#1a1f2e] hover:shadow-[0_0_15px_rgba(0,217,255,0.2)]"
+              >
+                Return to Home
+              </Link>
+            </div>
+            <p className="text-xs text-[#6b7280] pt-2">
+              Data will reload automatically when available. Please try refreshing the page.
+            </p>
+          </div>
         </div>
       )}
 

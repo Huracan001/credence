@@ -324,9 +324,32 @@ export async function refreshMarkets(): Promise<MarketsResponse> {
   let data: Market[] = [];
   try {
     data = await fetchPolymarketMarkets();
+    if (!data || data.length === 0) {
+      console.warn("[refreshMarkets] polymarket returned empty array, trying fallback");
+      // Try to use persisted data as fallback
+      const persisted = await getMarkets();
+      if (persisted && persisted.length > 0) {
+        console.log(`[refreshMarkets] using ${persisted.length} persisted markets as fallback`);
+        data = persisted;
+      } else {
+        throw new Error("No markets available from API or persistence");
+      }
+    }
   } catch (err) {
     console.error("[refreshMarkets] polymarket fetch failed", err);
-    throw err;
+    // Try persisted data as last resort
+    try {
+      const persisted = await getMarkets();
+      if (persisted && persisted.length > 0) {
+        console.log(`[refreshMarkets] using ${persisted.length} persisted markets after error`);
+        data = persisted;
+      } else {
+        throw err; // Re-throw if no fallback available
+      }
+    } catch (persistErr) {
+      console.error("[refreshMarkets] persisted data also unavailable", persistErr);
+      throw err; // Re-throw original error
+    }
   }
   const shifts = await detectBeliefShifts(data);
   const enriched = await enrichMarkets(data);
