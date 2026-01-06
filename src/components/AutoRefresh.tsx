@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 
 export function AutoRefresh() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export function AutoRefresh() {
   return (
     <div className="flex items-center gap-2 text-xs text-[#6b7280] uppercase tracking-wider">
       <span className="w-2 h-2 bg-[#00d9ff] rounded-full animate-pulse"></span>
-      <span>Auto-refresh every 5 minutes</span>
+      <span>Auto-refresh every 3 minutes</span>
       <span className="text-[#00d9ff]">
         ({minutes}:{seconds.toString().padStart(2, "0")})
       </span>

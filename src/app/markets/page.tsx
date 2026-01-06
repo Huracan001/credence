@@ -15,7 +15,7 @@ const FALLBACK_TOP_MOVERS = 3;
 
 export default async function MarketsPage() {
   noStore(); // ensure this route is treated as dynamic and never statically generated
-  const snapshot = await getMarketsSnapshot({ forceRefresh: true });
+  const snapshot = await getMarketsSnapshot(); // Respect cache - refresh only when cache expires (5 minutes)
   const hasMarkets = snapshot.markets.length > 0;
   const confidenceFromVolume = (volume: number): BeliefShiftDisplay["confidence"] => {
     if (volume >= 5_000_000) return "high";

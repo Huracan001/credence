@@ -22,7 +22,7 @@ function confidenceFromVolume(volume: number): "low" | "medium" | "high" {
 
 export default async function Home() {
   noStore(); // enforce dynamic rendering; avoid static pre-rendering with live fetches
-  const snapshot = await getMarketsSnapshot({ forceRefresh: true });
+  const snapshot = await getMarketsSnapshot(); // Respect cache - refresh only when cache expires (5 minutes)
   const featuredMarkets = snapshot.markets.slice(0, 3);
   const hasMarkets = snapshot.markets.length > 0;
   const mappedShifts: BeliefShiftDisplay[] = snapshot.shifts
