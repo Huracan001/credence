@@ -105,7 +105,7 @@ export default async function Home() {
                 <span className="w-1 h-4 bg-[#00d9ff]"></span>
                 PROCESS
               </h2>
-              <ul className="space-y-4 text-sm text-[#6b7280]">
+              <ul className="space-y-4 text-sm text-[#e0e0e0] leading-relaxed">
                 <li className="border-l-2 border-[#00d9ff]/30 pl-4 relative">
                   <span className="absolute left-[-6px] top-0 w-2 h-2 bg-[#00d9ff] rounded-full"></span>
                   Event-focused probabilities sourced from prediction markets.
