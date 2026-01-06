@@ -100,10 +100,16 @@ function renderDeterministicInsight(
 
   // Fallback to basic explanation if no enriched context
   if (whyMoved.length === 0) {
-    whyMoved.push(
-      "Explanation references observed order book and trading activity only.",
-      liquidityText,
-    );
+    if (enrichedContext?.fallbackExplanation) {
+      // Use web search context if available
+      whyMoved.push(enrichedContext.fallbackExplanation);
+    } else {
+      // Basic fallback with market title
+      whyMoved.push(
+        `Market question: "${market.question}". Explanation references observed order book and trading activity only.`,
+        liquidityText,
+      );
+    }
   } else {
     whyMoved.push(liquidityText);
   }
@@ -121,13 +127,18 @@ function renderDeterministicInsight(
 
   whatChanged.push(context.tradeActivitySummary ?? "Recent trading activity is being monitored.");
 
-  // Enhanced summary with enriched context
-  let summary = `The market assigns ${formatPercent(
+  // Enhanced summary with enriched context - always use market title
+  let summary = `Market question: "${market.question}". The market assigns ${formatPercent(
     context.currentProbability,
-  )} to "${context.eventTitle}", treated as ${context.confidenceLabel ?? "Unknown"} confidence.`;
+  )} probability, treated as ${context.confidenceLabel ?? "Unknown"} confidence.`;
   
-  if (enrichedContext?.summary) {
-    summary = enrichedContext.summary;
+  if (enrichedContext) {
+    // Use enriched summary if available, otherwise use fallback explanation
+    if (enrichedContext.summary && enrichedContext.keyDrivers.length > 0) {
+      summary = enrichedContext.summary;
+    } else if (enrichedContext.fallbackExplanation) {
+      summary = enrichedContext.fallbackExplanation;
+    }
   }
 
   return {

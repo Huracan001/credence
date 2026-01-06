@@ -2,15 +2,18 @@ import { Market, BeliefShift } from "@/types";
 import { fetchNewsForMarket, fetchGoogleNewsForMarket, NewsArticle } from "./providers/news";
 import { fetchTweetsForMarket, TwitterPost } from "./providers/twitter";
 import { fetchPolymarketMarkets } from "./providers/polymarket";
+import { searchWebForMarket, generateContextFromSearch, WebSearchResult } from "./providers/webSearch";
 
 export type EnrichedContext = {
   market: Market;
   shift?: BeliefShift | null;
   news: NewsArticle[];
   tweets: TwitterPost[];
+  webSearch: WebSearchResult[];
   relatedMarkets: Market[];
   summary: string;
   keyDrivers: string[];
+  fallbackExplanation: string;
 };
 
 /**
@@ -21,27 +24,36 @@ export async function aggregateContext(
   shift?: BeliefShift | null,
 ): Promise<EnrichedContext> {
   // Fetch data from all sources in parallel
-  const [news, tweets, allMarkets] = await Promise.all([
+  const [news, tweets, allMarkets, webSearch] = await Promise.all([
     // Try NewsAPI first, fallback to Google News
     fetchNewsForMarket(market).catch(() => fetchGoogleNewsForMarket(market)),
     fetchTweetsForMarket(market).catch(() => []),
     fetchPolymarketMarkets().catch(() => []),
+    // Always try web search as fallback
+    searchWebForMarket(market).catch(() => []),
   ]);
 
   // Find related markets (same category or similar keywords)
   const relatedMarkets = findRelatedMarkets(market, allMarkets);
 
   // Generate summary and key drivers
-  const { summary, keyDrivers } = generateSummary(market, shift, news, tweets);
+  const { summary, keyDrivers } = generateSummary(market, shift, news, tweets, webSearch);
+
+  // Generate fallback explanation using market title + web search
+  const fallbackExplanation = webSearch.length > 0
+    ? generateContextFromSearch(market, webSearch)
+    : `Market question: "${market.question}". This prediction market reflects current sentiment about this topic. Current probability: ${Math.round(market.probability * 100)}%.`;
 
   return {
     market,
     shift: shift ?? null,
     news: news.slice(0, 5), // Limit to 5 most relevant
     tweets: tweets.slice(0, 10), // Limit to 10 most relevant
+    webSearch: webSearch.slice(0, 5), // Limit to 5 search results
     relatedMarkets: relatedMarkets.slice(0, 5), // Limit to 5 related markets
     summary,
     keyDrivers,
+    fallbackExplanation,
   };
 }
 
@@ -90,6 +102,7 @@ function generateSummary(
   shift: BeliefShift | null | undefined,
   news: NewsArticle[],
   tweets: TwitterPost[],
+  webSearch: WebSearchResult[],
 ): { summary: string; keyDrivers: string[] } {
   const drivers: string[] = [];
 
@@ -121,16 +134,30 @@ function generateSummary(
     }
   }
 
+  // Analyze web search results
+  if (webSearch.length > 0) {
+    drivers.push(`Web research found ${webSearch.length} relevant source${webSearch.length > 1 ? "s" : ""} providing context`);
+  }
+
   // Analyze probability shift
   if (shift && Math.abs(shift.delta) >= 0.05) {
     const direction = shift.delta > 0 ? "increase" : "decrease";
     drivers.push(`Notable probability ${direction} of ${Math.abs(shift.delta * 100).toFixed(1)} percentage points`);
   }
 
-  // Generate summary
-  let summary = `Market analysis for "${market.question}"`;
+  // Generate summary - always include market title
+  let summary = `Market question: "${market.question}"`;
+  
   if (drivers.length > 0) {
     summary += `. Key factors: ${drivers.slice(0, 3).join("; ")}.`;
+  } else if (webSearch.length > 0) {
+    // Use web search context if no other drivers
+    const searchContext = webSearch[0]?.snippet?.substring(0, 150);
+    if (searchContext) {
+      summary += `. Research indicates: ${searchContext}...`;
+    } else {
+      summary += `. Current probability: ${Math.round(market.probability * 100)}%.`;
+    }
   } else {
     summary += `. Current probability: ${Math.round(market.probability * 100)}%.`;
   }

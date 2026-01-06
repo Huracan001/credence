@@ -6,7 +6,7 @@ type EnrichedContextProps = {
 };
 
 export function EnrichedContext({ context }: EnrichedContextProps) {
-  const { news, tweets, relatedMarkets, keyDrivers } = context;
+  const { news, tweets, webSearch, relatedMarkets, keyDrivers } = context;
 
   return (
     <div className="space-y-6">
@@ -120,6 +120,48 @@ export function EnrichedContext({ context }: EnrichedContextProps) {
                     </div>
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Web Search Results */}
+      {webSearch.length > 0 && (
+        <div className="glass-panel glow-border">
+          <div className="border-b border-[#1a1f2e] px-6 py-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#00d9ff] font-semibold flex items-center gap-2">
+              <span className="w-1 h-4 bg-[#00d9ff]"></span>
+              WEB RESEARCH
+            </p>
+            <p className="text-xs text-[#6b7280] mt-1 uppercase tracking-wider">
+              Contextual information from web search
+            </p>
+          </div>
+          <div className="divide-y divide-[#1a1f2e]">
+            {webSearch.map((result, index) => (
+              <div
+                key={index}
+                className="px-6 py-4 transition-all hover:bg-[#1a1f2e]/30 hover:border-l-2 hover:border-l-[#00d9ff]"
+              >
+                <a
+                  href={result.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block space-y-2 group"
+                >
+                  <h3 className="text-sm font-bold text-[#f0f0f0] group-hover:text-[#00d9ff] transition-colors">
+                    {result.title}
+                  </h3>
+                  {result.snippet && (
+                    <p className="text-xs text-[#6b7280] leading-relaxed line-clamp-2">
+                      {result.snippet}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-[#6b7280] uppercase tracking-wider">
+                    <span>{result.source}</span>
+                  </div>
+                </a>
               </div>
             ))}
           </div>
