@@ -215,7 +215,10 @@ export async function generateGuardedInsight(
   try {
     await initializeElizaAgent();
     elizaInsight = await generateElizaInsight(market, shift ?? null, {
-      news: enrichedContext?.news,
+      news: enrichedContext?.news?.map(article => ({
+        title: article.title,
+        snippet: article.description ?? "",
+      })),
       tweets: enrichedContext?.tweets,
       webSearch: enrichedContext?.webSearch,
     });
