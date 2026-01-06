@@ -91,7 +91,7 @@ export default async function Home() {
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/markets"
-                  className="bg-[#00d9ff] px-4 py-2 text-sm font-black tracking-wider text-[#0a0a0f] uppercase transition-all hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,217,255,0.4)]"
+                  className="border-2 border-[#00d9ff] bg-[#0a0a0f] px-4 py-2 text-sm font-black tracking-wider text-[#00d9ff] uppercase transition-all hover:bg-[#00d9ff] hover:text-[#0a0a0f] hover:shadow-[0_0_20px_rgba(0,217,255,0.4)]"
                 >
                   MARKETS
                 </Link>
