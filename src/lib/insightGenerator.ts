@@ -2,6 +2,7 @@ import { BeliefShift, ExplanationContext, Market, StoredInsight } from "@/types"
 import { getFromCache, setCache } from "@/lib/cache";
 import { buildExplanationContext } from "@/lib/metrics";
 import { aggregateContext, EnrichedContext } from "@/lib/contextAggregator";
+import { generateElizaInsight, initializeElizaAgent } from "@/lib/elizaos/agent";
 
 type ConfidenceLabel = "High" | "Medium" | "Low" | null;
 
@@ -45,6 +46,7 @@ function renderDeterministicInsight(
   context: ExplanationContext,
   shift?: BeliefShift | null,
   enrichedContext?: EnrichedContext | null,
+  elizaInsight?: string | null,
 ): StoredInsight {
   const movement24h =
     context.probabilityChange24h !== null && context.probabilityChange24h !== undefined
@@ -128,11 +130,12 @@ function renderDeterministicInsight(
   whatChanged.push(context.tradeActivitySummary ?? "Recent trading activity is being monitored.");
 
   // Enhanced summary with enriched context - always use market title
-  let summary = `Market question: "${market.question}". The market assigns ${formatPercent(
+  // Prefer ElizaOS-generated insight if available
+  let summary = elizaInsight || `Market question: "${market.question}". The market assigns ${formatPercent(
     context.currentProbability,
   )} probability, treated as ${context.confidenceLabel ?? "Unknown"} confidence.`;
   
-  if (enrichedContext) {
+  if (!elizaInsight && enrichedContext) {
     // Use enriched summary if available, otherwise use fallback explanation
     if (enrichedContext.summary && enrichedContext.keyDrivers.length > 0) {
       summary = enrichedContext.summary;
@@ -207,7 +210,20 @@ export async function generateGuardedInsight(
     }
   }
 
-  const insight = renderDeterministicInsight(market, context, shift ?? null, enrichedContext);
+  // Try to use ElizaOS agent for insight generation
+  let elizaInsight: string | null = null;
+  try {
+    await initializeElizaAgent();
+    elizaInsight = await generateElizaInsight(market, shift ?? null, {
+      news: enrichedContext?.news,
+      tweets: enrichedContext?.tweets,
+      webSearch: enrichedContext?.webSearch,
+    });
+  } catch (err) {
+    console.warn("[insightGenerator] ElizaOS insight generation failed, using deterministic fallback", err);
+  }
+
+  const insight = renderDeterministicInsight(market, context, shift ?? null, enrichedContext, elizaInsight);
   setCache(cacheKey, insight, EXPLANATION_TTL_MS);
   return { insight, context, cached: false };
 }
