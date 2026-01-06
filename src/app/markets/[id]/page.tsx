@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChangeIndicator } from "@/components/ChangeIndicator";
 import { InsightSections } from "@/components/InsightSections";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
