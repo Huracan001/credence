@@ -66,50 +66,56 @@ export default async function Home() {
 
   return (
     <div className="space-y-16">
-      <section className="border-b border-[#e5e5e5] pb-12">
-        <div className="flex flex-col gap-8">
-          <div className="inline-flex items-center gap-2 self-start text-xs uppercase tracking-[0.15em] text-[#8e8e8e]">
-            Market evidence
+      <section className="border-b border-[#1a1f2e] pb-12 relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d9ff]/30 to-transparent"></div>
+        <div className="flex flex-col gap-8 pt-4">
+          <div className="inline-flex items-center gap-2 self-start text-xs uppercase tracking-[0.2em] text-[#6b7280] font-semibold">
+            <span className="w-2 h-2 bg-[#00d9ff] rounded-full animate-pulse"></span>
+            MARKET EVIDENCE
           </div>
           <div className="grid gap-12 md:grid-cols-[1.1fr_0.9fr] md:items-center">
             <div className="space-y-6">
-              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-[#0f0f0f] md:text-5xl">
-                Evidence, not speculation.
+              <h1 className="text-5xl font-black leading-[1.1] tracking-tight text-[#f0f0f0] md:text-6xl">
+                EVIDENCE,<br />NOT SPECULATION.
               </h1>
-              <p className="text-lg leading-relaxed text-[#4a4a4a]">
-                AKASHI translates prediction market probabilities into clear, evidence-based insights. 
-                No forecasts, no recommendations—just what the market signals and how confident we can be.
+              <p className="text-lg leading-relaxed text-[#6b7280] max-w-xl">
+                AKASHI decodes prediction market probabilities through ElizaOS. 
+                Real-time signals. Zero hype. Mission control for crypto intelligence.
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/markets"
-                  className="bg-[#0f0f0f] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#4a4a4a]"
+                  className="bg-[#00d9ff] px-6 py-3 text-sm font-black tracking-wider text-[#0a0a0f] uppercase transition-all hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,217,255,0.4)]"
                 >
-                  View markets
+                  ACCESS MARKETS →
                 </Link>
                 <Link
                   href="/trust"
-                  className="border border-[#e5e5e5] bg-white px-6 py-3 text-sm font-semibold text-[#0f0f0f] transition-colors hover:border-[#c92a2a] hover:text-[#c92a2a]"
+                  className="border border-[#1a1f2e] bg-[#0f1419] px-6 py-3 text-sm font-semibold tracking-wider text-[#00d9ff] uppercase transition-all hover:border-[#00d9ff] hover:bg-[#1a1f2e] hover:shadow-[0_0_15px_rgba(0,217,255,0.2)]"
                 >
-                  Method
+                  METHOD
                 </Link>
               </div>
-              <p className="pt-2 text-xs text-[#8e8e8e]">
-                Informational analysis based on prediction market data. Not financial advice or investment recommendations.
+              <p className="pt-2 text-xs text-[#6b7280] uppercase tracking-wider">
+                Informational analysis. Not financial advice.
               </p>
             </div>
-            <div className="glass-panel p-6">
-              <h2 className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e] mb-6">
-                Process
+            <div className="glass-panel p-6 glow-border">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-[#00d9ff] mb-6 font-semibold flex items-center gap-2">
+                <span className="w-1 h-4 bg-[#00d9ff]"></span>
+                PROCESS
               </h2>
-              <ul className="space-y-4 text-sm text-[#4a4a4a]">
-                <li className="border-l-2 border-[#e5e5e5] pl-4">
+              <ul className="space-y-4 text-sm text-[#6b7280]">
+                <li className="border-l-2 border-[#00d9ff]/30 pl-4 relative">
+                  <span className="absolute left-[-6px] top-0 w-2 h-2 bg-[#00d9ff] rounded-full"></span>
                   Event-focused probabilities sourced from prediction markets.
                 </li>
-                <li className="border-l-2 border-[#e5e5e5] pl-4">
-                  Market signals translated into clear context after liquidity and confidence validation.
+                <li className="border-l-2 border-[#00d9ff]/30 pl-4 relative">
+                  <span className="absolute left-[-6px] top-0 w-2 h-2 bg-[#00d9ff] rounded-full"></span>
+                  A guardrailed ElizaOS agent translates market moves into plain-language context after liquidity and confidence checks.
                 </li>
-                <li className="border-l-2 border-[#e5e5e5] pl-4">
+                <li className="border-l-2 border-[#00d9ff]/30 pl-4 relative">
+                  <span className="absolute left-[-6px] top-0 w-2 h-2 bg-[#00d9ff] rounded-full"></span>
                   Changes, context, and uncertainty presented with restraint—no speculation when signals are insufficient.
                 </li>
               </ul>
@@ -120,28 +126,31 @@ export default async function Home() {
 
       <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-[#e5e5e5] pb-3">
-            <h2 className="text-xl font-bold tracking-tight text-[#0f0f0f]">Markets</h2>
+          <div className="flex items-center justify-between border-b border-[#1a1f2e] pb-3">
+            <h2 className="text-xl font-black tracking-wider text-[#f0f0f0] uppercase flex items-center gap-2">
+              <span className="w-1 h-5 bg-[#00d9ff]"></span>
+              MARKETS
+            </h2>
             <Link
               href="/markets"
-              className="text-sm text-[#8e8e8e] underline-offset-4 hover:text-[#0f0f0f] transition-colors"
+              className="text-xs text-[#6b7280] uppercase tracking-wider font-semibold hover:text-[#00d9ff] transition-colors"
             >
-              View all
+              VIEW ALL →
             </Link>
           </div>
           {hasMarkets ? (
             <div className="space-y-4">
               {featuredMarkets.map((market) => (
-                <div key={market.id} className="glass-panel p-6">
+                <div key={market.id} className="glass-panel p-6 glow-border hover:border-[#00d9ff]/50 transition-all">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="space-y-3">
                       <Link
                         href={`/markets/${market.id}`}
-                        className="text-base font-semibold leading-snug text-[#0f0f0f] hover:text-[#c92a2a] transition-colors block"
+                        className="text-base font-bold leading-snug text-[#f0f0f0] hover:text-[#00d9ff] transition-colors block"
                       >
                         {market.question}
                       </Link>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-[#8e8e8e]">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b7280]">
                         <ProbabilityBadge
                           probability={market.probability}
                           displayProbability={market.displayProbability}
@@ -164,7 +173,8 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-6 text-[#8e8e8e]">
+            <div className="glass-panel p-6 text-[#6b7280] border-[#1a1f2e]">
+              <span className="inline-block w-2 h-2 bg-[#ff0040] rounded-full mr-2 animate-pulse"></span>
               Markets temporarily unavailable. Data will reload automatically.
             </div>
           )}

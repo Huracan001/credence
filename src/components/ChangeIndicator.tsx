@@ -8,23 +8,23 @@ export function ChangeIndicator({ value, label, emphasize }: Props) {
   const direction = value > 0 ? "up" : value < 0 ? "down" : "flat";
   const color =
     direction === "up"
-      ? "text-[#c92a2a]"
+      ? "text-[#ff0040]"
       : direction === "down"
-        ? "text-[#4c6ef5]"
-        : "text-[#8e8e8e]";
-  const arrow = direction === "up" ? "↑" : direction === "down" ? "↓" : "—";
+        ? "text-[#00d9ff]"
+        : "text-[#6b7280]";
+  const arrow = direction === "up" ? "▲" : direction === "down" ? "▼" : "—";
   const highlight =
     emphasize && Math.abs(value) >= 0.02
-      ? "px-2 py-1 border border-[#e5e5e5] bg-[#f5f4ef]"
+      ? "px-3 py-1.5 border border-[#00d9ff]/30 bg-[#0f1419] glow-border"
       : "";
 
   return (
-    <div className={`flex items-center gap-1 text-sm ${highlight}`}>
-      <span className={`font-semibold ${color}`}>
+    <div className={`flex items-center gap-2 text-sm ${highlight}`}>
+      <span className={`font-black tracking-tight ${color} ${direction !== "flat" ? "glow-text" : ""}`}>
         {arrow} {value > 0 ? "+" : ""}
         {(value * 100).toFixed(1)} pts
       </span>
-      {label ? <span className="text-[#8e8e8e]">({label})</span> : null}
+      {label ? <span className="text-[#6b7280] text-xs uppercase tracking-wider">({label})</span> : null}
     </div>
   );
 }

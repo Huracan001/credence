@@ -43,20 +43,22 @@ export function InsightSections({ insight }: Props) {
         const content = insight[section.key];
         const lines = Array.isArray(content) ? content : [content];
         return (
-          <div key={section.key} className="glass-panel h-full p-6">
-            <div className="mb-4 flex items-start justify-between border-b border-[#e5e5e5] pb-3">
+          <div key={section.key} className="glass-panel h-full p-6 glow-border">
+            <div className="mb-4 flex items-start justify-between border-b border-[#1a1f2e] pb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e] mb-1">
-                  {section.title}
+                <p className="text-xs uppercase tracking-[0.2em] text-[#00d9ff] mb-1 font-semibold flex items-center gap-2">
+                  <span className="w-1 h-4 bg-[#00d9ff]"></span>
+                  {section.title.toUpperCase()}
                 </p>
                 {section.helper ? (
-                  <p className="text-xs text-[#8e8e8e]">{section.helper}</p>
+                  <p className="text-xs text-[#6b7280] uppercase tracking-wider mt-1">{section.helper}</p>
                 ) : null}
               </div>
             </div>
-            <ul className="space-y-3 text-sm leading-relaxed text-[#4a4a4a]">
+            <ul className="space-y-3 text-sm leading-relaxed text-[#6b7280]">
               {lines.map((line, idx) => (
-                <li key={idx} className="border-l-2 border-[#e5e5e5] pl-4">
+                <li key={idx} className="border-l-2 border-[#00d9ff]/30 pl-4 relative">
+                  <span className="absolute left-[-6px] top-0 w-2 h-2 bg-[#00d9ff] rounded-full"></span>
                   {line}
                 </li>
               ))}

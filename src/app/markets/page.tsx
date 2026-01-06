@@ -59,31 +59,37 @@ export default async function MarketsPage() {
 
   return (
     <div className="space-y-12">
-      <header className="space-y-4 border-b border-[#e5e5e5] pb-8">
-        <p className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e]">
-          Markets
+      <header className="space-y-4 border-b border-[#1a1f2e] pb-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d9ff]/30 to-transparent"></div>
+        <p className="text-xs uppercase tracking-[0.2em] text-[#00d9ff] font-semibold flex items-center gap-2 pt-4">
+          <span className="w-2 h-2 bg-[#00d9ff] rounded-full animate-pulse"></span>
+          MARKETS
         </p>
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0f0f0f] md:text-4xl">
-          Event probabilities with market context
+        <h1 className="text-4xl font-black leading-tight tracking-tight text-[#f0f0f0] md:text-5xl uppercase">
+          EVENT PROBABILITIES<br />WITH MARKET CONTEXT
         </h1>
-        <p className="max-w-2xl text-base leading-relaxed text-[#4a4a4a]">
+        <p className="max-w-2xl text-base leading-relaxed text-[#6b7280]">
           Each market shows probability, recent shifts, and liquidity depth. 
-          Explanations are generated only after signal-quality validation.
+          Explanations generated through ElizaOS only after signal-quality validation.
         </p>
       </header>
 
       {hasMarkets ? (
         <MarketTable markets={snapshot.markets} shifts={snapshot.shifts} />
       ) : (
-        <div className="glass-panel p-6 text-[#8e8e8e]">
+        <div className="glass-panel p-6 text-[#6b7280] glow-border">
+          <span className="inline-block w-2 h-2 bg-[#ff0040] rounded-full mr-2 animate-pulse"></span>
           Markets temporarily unavailable. Data will reload automatically.
         </div>
       )}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
-        <div className="glass-panel p-6">
-          <h2 className="text-lg font-bold tracking-tight text-[#0f0f0f] mb-3">Approach</h2>
-          <p className="text-sm leading-relaxed text-[#4a4a4a]">
+        <div className="glass-panel p-6 glow-border">
+          <h2 className="text-lg font-black tracking-wider text-[#00d9ff] mb-3 uppercase flex items-center gap-2">
+            <span className="w-1 h-5 bg-[#00d9ff]"></span>
+            APPROACH
+          </h2>
+          <p className="text-sm leading-relaxed text-[#6b7280]">
             Probabilities reflect prediction market data. We do not forecast outcomes or recommend actions. 
             Significant moves are flagged for review, not momentum.
           </p>

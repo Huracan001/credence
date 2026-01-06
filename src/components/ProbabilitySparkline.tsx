@@ -36,20 +36,28 @@ export function ProbabilitySparkline({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label="Probability trend"
-      className="w-full text-[#c92a2a]"
+      className="w-full text-[#00d9ff]"
     >
       <defs>
         <linearGradient id="sparkline" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
+          <stop offset="0%" stopColor="#00d9ff" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#00d9ff" stopOpacity="0.05" />
         </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
       <polyline
         fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
+        stroke="#00d9ff"
+        strokeWidth="2.5"
         strokeLinejoin="round"
         points={points}
+        filter="url(#glow)"
       />
       <polyline
         fill="url(#sparkline)"
@@ -66,10 +74,11 @@ export function ProbabilitySparkline({
                 key={point.date}
                 cx={x}
                 cy={y}
-                r={3}
-                className="fill-white"
-                stroke="currentColor"
-                strokeWidth="1.5"
+                r={4}
+                fill="#0a0a0f"
+                stroke="#00d9ff"
+                strokeWidth="2"
+                filter="url(#glow)"
               />
             );
           })

@@ -11,9 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AKASHI | Evidence-based market insights",
+  title: "AKASHI | Mission Control for Crypto Intelligence",
   description:
-    "Market probabilities translated into clear, evidence-based insights. No speculation, just signal.",
+    "Real-time market probabilities decoded through ElizaOS. Evidence, not speculation.",
 };
 
 export default function RootLayout({
@@ -29,14 +29,15 @@ export default function RootLayout({
           <main className="mx-auto w-full max-w-6xl px-6 pb-20 pt-12">
             {children}
           </main>
-          <footer className="border-t border-[#e5e5e5] bg-white px-6 py-10 text-sm text-[#8e8e8e]">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-[#0f0f0f] tracking-wide">AKASHI</p>
-              <p className="max-w-md">
+          <footer className="border-t border-[#1a1f2e] bg-[#0a0a0f]/80 backdrop-blur-sm px-6 py-10 text-xs text-[#6b7280] relative">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d9ff]/30 to-transparent"></div>
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-4">
+              <p className="font-black tracking-wider text-[#00d9ff] uppercase">AKASHI</p>
+              <p className="max-w-md text-[#6b7280]">
                 Informational analysis based on prediction market data. Not financial advice or investment recommendations.
               </p>
-              <Link href="/trust" className="text-[#c92a2a] hover:text-[#a61e1e] transition-colors">
-                Method
+              <Link href="/trust" className="text-[#00d9ff] hover:text-[#00b8d9] transition-colors uppercase tracking-wider font-semibold">
+                METHOD →
               </Link>
             </div>
           </footer>

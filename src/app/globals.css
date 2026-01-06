@@ -2,33 +2,64 @@
 
 :root {
   color-scheme: dark;
-  --akashi-black: #0f0f0f;
-  --akashi-charcoal: #1a1a1a;
-  --akashi-ivory: #f5f4ef;
-  --akashi-red: #c92a2a;
-  --akashi-indigo: #4c6ef5;
-  --akashi-gray-light: #e5e5e5;
-  --akashi-gray-medium: #8e8e8e;
-  --akashi-gray-dark: #4a4a4a;
+  --akashi-black: #0a0a0f;
+  --akashi-navy: #0f1419;
+  --akashi-dark: #1a1f2e;
+  --akashi-white: #f0f0f0;
+  --akashi-gray: #6b7280;
+  --akashi-neon-red: #ff0040;
+  --akashi-vermillion: #e63946;
+  --akashi-cyan: #00d9ff;
+  --akashi-blue: #0099ff;
 }
 
 body {
   @apply antialiased;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  background-color: var(--akashi-ivory);
-  color: var(--akashi-black);
+  background: var(--akashi-black);
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(0, 217, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 0, 64, 0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a0f 0%, #0f1419 100%);
+  color: var(--akashi-white);
   min-height: 100vh;
 }
 
 a {
-  @apply text-[#c92a2a] underline-offset-4 hover:underline focus-visible:underline transition-colors;
+  @apply text-[#00d9ff] underline-offset-4 hover:text-[#00b8d9] hover:underline focus-visible:underline transition-all;
 }
 
 .glass-panel {
-  @apply border border-[#e5e5e5] bg-white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  @apply border border-[#1a1f2e] bg-[#0f1419]/80 backdrop-blur-sm;
+  box-shadow: 
+    0 0 0 1px rgba(0, 217, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.3), transparent);
 }
 
 .muted {
-  @apply text-[#8e8e8e];
+  @apply text-[#6b7280];
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.glow-text {
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+}
+
+.glow-border {
+  box-shadow: 0 0 8px rgba(0, 217, 255, 0.3), inset 0 0 8px rgba(0, 217, 255, 0.1);
 }
