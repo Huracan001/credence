@@ -6,7 +6,8 @@ type Props = {
 };
 
 export function CategoryBadge({ category, className = "" }: Props) {
-  if (category === "general") return null;
+  // Only show crypto badges, hide economy and politics
+  if (category !== "crypto") return null;
 
   const config = {
     crypto: {
@@ -15,20 +16,6 @@ export function CategoryBadge({ category, className = "" }: Props) {
       borderColor: "border-[#00d9ff]",
       bgColor: "bg-[#00d9ff]/10",
       glow: "shadow-[0_0_8px_rgba(0,217,255,0.3)]",
-    },
-    economy: {
-      label: "ECONOMY",
-      color: "text-[#ffa500]",
-      borderColor: "border-[#ffa500]",
-      bgColor: "bg-[#ffa500]/10",
-      glow: "shadow-[0_0_8px_rgba(255,165,0,0.3)]",
-    },
-    politics: {
-      label: "POLITICS",
-      color: "text-[#ff0040]",
-      borderColor: "border-[#ff0040]",
-      bgColor: "bg-[#ff0040]/10",
-      glow: "shadow-[0_0_8px_rgba(255,0,64,0.3)]",
     },
   };
 

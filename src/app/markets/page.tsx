@@ -77,10 +77,8 @@ export default async function MarketsPage() {
             Explanations generated through ElizaOS only after signal-quality validation.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORIES:</span>
+            <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORY:</span>
             <CategoryBadge category="crypto" />
-            <CategoryBadge category="economy" />
-            <CategoryBadge category="politics" />
           </div>
           <AutoRefresh />
         </div>

@@ -85,10 +85,8 @@ export default async function Home() {
                 Real-time signals. Zero hype. Mission control for crypto intelligence.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORIES:</span>
+                <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORY:</span>
                 <CategoryBadge category="crypto" />
-                <CategoryBadge category="economy" />
-                <CategoryBadge category="politics" />
               </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
