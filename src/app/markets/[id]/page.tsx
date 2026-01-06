@@ -2,6 +2,7 @@ import { ChangeIndicator } from "@/components/ChangeIndicator";
 import { InsightSections } from "@/components/InsightSections";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
+import { CategoryBadge, getCategoryFromMarket } from "@/components/CategoryBadge";
 import { getMarketSnapshotById, refreshMarkets } from "@/lib/server/markets";
 import { getLatestBeliefShift, getLatestInsight } from "@/lib/persistence/store";
 import { generateGuardedInsight } from "@/lib/insightGenerator";
@@ -85,7 +86,10 @@ export default async function MarketDetail({ params }: Props) {
           <span className="w-2 h-2 bg-[#00d9ff] rounded-full animate-pulse"></span>
           INSIGHT
         </p>
-        <h1 className="text-4xl font-black leading-tight tracking-tight text-[#f0f0f0] md:text-5xl uppercase">{market.question}</h1>
+        <div className="flex items-start gap-3 flex-wrap">
+          <h1 className="text-4xl font-black leading-tight tracking-tight text-[#f0f0f0] md:text-5xl uppercase flex-1 min-w-0">{market.question}</h1>
+          <CategoryBadge category={getCategoryFromMarket(market.question, market.assetId)} className="mt-2" />
+        </div>
         <p className="max-w-2xl text-base leading-relaxed text-[#6b7280]">
           Market-implied probability decoded through ElizaOS. No forecasts or
           recommendations—only evidence of current sentiment and its uncertainty.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChangeIndicator } from "./ChangeIndicator";
 import { ProbabilityBadge } from "./ProbabilityBadge";
+import { CategoryBadge, getCategoryFromMarket } from "./CategoryBadge";
 import { BeliefShift, Market } from "@/types";
 
 type Props = {
@@ -83,13 +84,16 @@ export function MarketTable({ markets, shifts = [] }: Props) {
             className="grid gap-4 px-6 py-6 sm:grid-cols-[1.5fr_1fr] sm:items-center transition-all hover:bg-[#1a1f2e]/30 hover:border-l-2 hover:border-l-[#00d9ff]"
           >
             <div className="space-y-3">
-              <Link
-                href={`/markets/${market.id}`}
-                className="group flex items-center gap-2 text-base font-bold leading-snug text-[#f0f0f0] hover:text-[#00d9ff] transition-colors"
-              >
-                {market.question}
-                <span className="text-xs text-[#00d9ff] opacity-0 transition-opacity group-hover:opacity-100">→</span>
-              </Link>
+              <div className="flex items-start gap-2 flex-wrap">
+                <Link
+                  href={`/markets/${market.id}`}
+                  className="group flex items-center gap-2 text-base font-bold leading-snug text-[#f0f0f0] hover:text-[#00d9ff] transition-colors flex-1 min-w-0"
+                >
+                  {market.question}
+                  <span className="text-xs text-[#00d9ff] opacity-0 transition-opacity group-hover:opacity-100">→</span>
+                </Link>
+                <CategoryBadge category={getCategoryFromMarket(market.question, market.assetId)} />
+              </div>
               <div className="flex flex-wrap gap-2 text-xs text-[#6b7280] uppercase tracking-wider">
                 <span className="px-2 py-1 border border-[#1a1f2e] bg-[#0f1419]">
                   UPDATED {dateFormatter.format(new Date(market.updatedAt)).toUpperCase()}

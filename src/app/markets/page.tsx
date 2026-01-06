@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { MarketTable } from "@/components/MarketTable";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
@@ -70,11 +71,17 @@ export default async function MarketsPage() {
         <h1 className="text-4xl font-black leading-tight tracking-tight text-[#f0f0f0] md:text-5xl uppercase">
           EVENT PROBABILITIES<br />WITH MARKET CONTEXT
         </h1>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="max-w-2xl text-base leading-relaxed text-[#6b7280]">
             Each market shows probability, recent shifts, and liquidity depth. 
             Explanations generated through ElizaOS only after signal-quality validation.
           </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORIES:</span>
+            <CategoryBadge category="crypto" />
+            <CategoryBadge category="economy" />
+            <CategoryBadge category="politics" />
+          </div>
           <AutoRefresh />
         </div>
       </header>

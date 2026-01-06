@@ -4,6 +4,7 @@ import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFee
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { CategoryBadge, getCategoryFromMarket } from "@/components/CategoryBadge";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,12 @@ export default async function Home() {
                 AKASHI decodes prediction market probabilities through ElizaOS. 
                 Real-time signals. Zero hype. Mission control for crypto intelligence.
               </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <span className="text-xs text-[#6b7280] uppercase tracking-wider">FOCUS CATEGORIES:</span>
+                <CategoryBadge category="crypto" />
+                <CategoryBadge category="economy" />
+                <CategoryBadge category="politics" />
+              </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/markets"
@@ -148,12 +155,15 @@ export default async function Home() {
                 <div key={market.id} className="glass-panel p-6 glow-border hover:border-[#00d9ff]/50 transition-all">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="space-y-3">
-                      <Link
-                        href={`/markets/${market.id}`}
-                        className="text-base font-bold leading-snug text-[#f0f0f0] hover:text-[#00d9ff] transition-colors block"
-                      >
-                        {market.question}
-                      </Link>
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <Link
+                          href={`/markets/${market.id}`}
+                          className="text-base font-bold leading-snug text-[#f0f0f0] hover:text-[#00d9ff] transition-colors flex-1 min-w-0"
+                        >
+                          {market.question}
+                        </Link>
+                        <CategoryBadge category={getCategoryFromMarket(market.question, market.assetId)} />
+                      </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b7280]">
                         <ProbabilityBadge
                           probability={market.probability}
