@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { MarketTable } from "@/components/MarketTable";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
@@ -69,10 +70,13 @@ export default async function MarketsPage() {
         <h1 className="text-4xl font-black leading-tight tracking-tight text-[#f0f0f0] md:text-5xl uppercase">
           EVENT PROBABILITIES<br />WITH MARKET CONTEXT
         </h1>
-        <p className="max-w-2xl text-base leading-relaxed text-[#6b7280]">
-          Each market shows probability, recent shifts, and liquidity depth. 
-          Explanations generated through ElizaOS only after signal-quality validation.
-        </p>
+        <div className="space-y-3">
+          <p className="max-w-2xl text-base leading-relaxed text-[#6b7280]">
+            Each market shows probability, recent shifts, and liquidity depth. 
+            Explanations generated through ElizaOS only after signal-quality validation.
+          </p>
+          <AutoRefresh />
+        </div>
       </header>
 
       {hasMarkets ? (

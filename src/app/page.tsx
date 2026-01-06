@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BeliefShiftFeed, BeliefShiftDisplay } from "@/components/BeliefShiftFeed";
 import { ProbabilityBadge } from "@/components/ProbabilityBadge";
 import { ProbabilitySparkline } from "@/components/ProbabilitySparkline";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { getMarketsSnapshot } from "@/lib/server/markets";
 
 export const dynamic = "force-dynamic";
@@ -91,14 +92,17 @@ export default async function Home() {
                 </Link>
                 <Link
                   href="/trust"
-                  className="border border-[#1a1f2e] bg-[#0f1419] px-6 py-3 text-sm font-semibold tracking-wider text-[#00d9ff] uppercase transition-all hover:border-[#00d9ff] hover:bg-[#1a1f2e] hover:shadow-[0_0_15px_rgba(0,217,255,0.2)]"
+                  className="border-2 border-[#00d9ff] bg-[#0f1419] px-6 py-3 text-sm font-bold tracking-wider text-[#00d9ff] uppercase transition-all hover:border-[#00d9ff] hover:bg-[#1a1f2e] hover:shadow-[0_0_15px_rgba(0,217,255,0.3)] hover:text-[#00d9ff] glow-border"
                 >
                   METHOD
                 </Link>
               </div>
-              <p className="pt-2 text-xs text-[#6b7280] uppercase tracking-wider">
-                Informational analysis. Not financial advice.
-              </p>
+              <div className="pt-2 space-y-2">
+                <p className="text-xs text-[#6b7280] uppercase tracking-wider">
+                  Informational analysis. Not financial advice.
+                </p>
+                <AutoRefresh />
+              </div>
             </div>
             <div className="glass-panel p-6 glow-border">
               <h2 className="text-xs uppercase tracking-[0.2em] text-[#00d9ff] mb-6 font-semibold flex items-center gap-2">
