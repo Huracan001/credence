@@ -58,36 +58,34 @@ export default async function MarketsPage() {
     : "Largest belief changes (low confidence)";
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <p className="text-sm uppercase tracking-wide text-slate-300">
-          Market dashboard
+    <div className="space-y-12">
+      <header className="space-y-4 border-b border-[#e5e5e5] pb-8">
+        <p className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e]">
+          Markets
         </p>
-        <h1 className="text-3xl font-semibold text-white">
-          Event-focused crypto markets with probabilistic context
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0f0f0f] md:text-4xl">
+          Event probabilities with market context
         </h1>
-        <p className="text-slate-200">
-          Each row shows market-implied probability, how it shifted, and how much
-          liquidity informs the signal. Click through for a guardrailed explanation
-          generated only after signal-quality checks.
+        <p className="max-w-2xl text-base leading-relaxed text-[#4a4a4a]">
+          Each market shows probability, recent shifts, and liquidity depth. 
+          Explanations are generated only after signal-quality validation.
         </p>
       </header>
 
       {hasMarkets ? (
         <MarketTable markets={snapshot.markets} shifts={snapshot.shifts} />
       ) : (
-        <div className="glass-panel p-5 text-slate-200">
-          Live markets are temporarily unavailable. Data will reload automatically.
+        <div className="glass-panel p-6 text-[#8e8e8e]">
+          Markets temporarily unavailable. Data will reload automatically.
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-        <div className="glass-panel p-5">
-          <h2 className="text-lg font-semibold text-white">Platform stance</h2>
-          <p className="mt-2 text-sm text-slate-200">
-            Probabilities are taken at face value from prediction markets. We do
-            not promise outcomes or recommend actions. Large moves are flagged so
-            you can review the narrative rather than chase momentum.
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
+        <div className="glass-panel p-6">
+          <h2 className="text-lg font-bold tracking-tight text-[#0f0f0f] mb-3">Approach</h2>
+          <p className="text-sm leading-relaxed text-[#4a4a4a]">
+            Probabilities reflect prediction market data. We do not forecast outcomes or recommend actions. 
+            Significant moves are flagged for review, not momentum.
           </p>
         </div>
         <BeliefShiftFeed

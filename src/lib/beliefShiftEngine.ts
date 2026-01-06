@@ -9,8 +9,107 @@ import {
 const DEFAULT_THRESHOLD = 0.01; // 1 percentage point in probability space
 const MIN_VOLUME_DELTA = 500; // trigger on modest absolute volume upticks
 
+const CRYPTO_KEYWORDS = [
+  "crypto",
+  "cryptocurrency",
+  "bitcoin",
+  "btc",
+  "ethereum",
+  "eth",
+  "blockchain",
+  "token",
+  "stablecoin",
+  "defi",
+  "nft",
+  "solana",
+  "sol",
+  "cardano",
+  "ada",
+  "xrp",
+  "ripple",
+  "doge",
+  "dogecoin",
+  "bnb",
+  "binance",
+  "tether",
+  "usdt",
+  "usdc",
+  "usd coin",
+];
+
+const ECONOMY_KEYWORDS = [
+  "inflation",
+  "cpi",
+  "gdp",
+  "economy",
+  "economic",
+  "recession",
+  "interest rate",
+  "rates",
+  "federal reserve",
+  "fed",
+  "jobs report",
+  "employment",
+  "unemployment",
+  "treasury",
+  "yield",
+  "monetary policy",
+  "fiscal",
+  "stimulus",
+  "quantitative easing",
+  "qe",
+  "stock market",
+  "s&p",
+  "dow",
+  "nasdaq",
+];
+
+const POLITICS_KEYWORDS = [
+  "election",
+  "president",
+  "presidential",
+  "congress",
+  "senate",
+  "house",
+  "senator",
+  "representative",
+  "governor",
+  "mayor",
+  "vote",
+  "voting",
+  "ballot",
+  "campaign",
+  "candidate",
+  "democrat",
+  "republican",
+  "party",
+  "political",
+  "politics",
+  "policy",
+  "legislation",
+  "bill",
+  "law",
+  "supreme court",
+  "scotus",
+  "impeachment",
+  "approval rating",
+  "poll",
+  "polling",
+];
+
 function classifyCategory(market: Market): string {
-  if (market.assetId) return `asset:${market.assetId}`;
+  const q = market.question.toLowerCase();
+  
+  // Check for crypto first (includes assetId detection)
+  if (market.assetId) return "crypto";
+  if (CRYPTO_KEYWORDS.some((keyword) => q.includes(keyword))) return "crypto";
+  
+  // Check for economy
+  if (ECONOMY_KEYWORDS.some((keyword) => q.includes(keyword))) return "economy";
+  
+  // Check for politics
+  if (POLITICS_KEYWORDS.some((keyword) => q.includes(keyword))) return "politics";
+  
   return "general";
 }
 

@@ -38,26 +38,25 @@ const sections: Array<{
 
 export function InsightSections({ insight }: Props) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       {sections.map((section) => {
         const content = insight[section.key];
         const lines = Array.isArray(content) ? content : [content];
         return (
-          <div key={section.key} className="glass-panel h-full p-5">
-            <div className="mb-3 flex items-center justify-between">
+          <div key={section.key} className="glass-panel h-full p-6">
+            <div className="mb-4 flex items-start justify-between border-b border-[#e5e5e5] pb-3">
               <div>
-                <p className="text-sm uppercase tracking-wide text-slate-300">
+                <p className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e] mb-1">
                   {section.title}
                 </p>
                 {section.helper ? (
-                  <p className="text-xs text-slate-400">{section.helper}</p>
+                  <p className="text-xs text-[#8e8e8e]">{section.helper}</p>
                 ) : null}
               </div>
-              <span className="text-xs text-slate-400">LLM-guided</span>
             </div>
-            <ul className="space-y-2 text-sm leading-relaxed text-slate-100">
+            <ul className="space-y-3 text-sm leading-relaxed text-[#4a4a4a]">
               {lines.map((line, idx) => (
-                <li key={idx} className="rounded-md bg-white/5 px-3 py-2">
+                <li key={idx} className="border-l-2 border-[#e5e5e5] pl-4">
                   {line}
                 </li>
               ))}

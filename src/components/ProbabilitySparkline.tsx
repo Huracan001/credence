@@ -36,18 +36,18 @@ export function ProbabilitySparkline({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label="Probability trend"
-      className="w-full text-sky-300"
+      className="w-full text-[#c92a2a]"
     >
       <defs>
         <linearGradient id="sparkline" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.15" />
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
         </linearGradient>
       </defs>
       <polyline
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="2"
         strokeLinejoin="round"
         points={points}
       />
@@ -55,7 +55,6 @@ export function ProbabilitySparkline({
         fill="url(#sparkline)"
         stroke="none"
         points={`0,${height} ${points} ${width},${height}`}
-        className="opacity-60"
       />
       {showDots
         ? data.map((point, idx) => {
@@ -67,10 +66,10 @@ export function ProbabilitySparkline({
                 key={point.date}
                 cx={x}
                 cy={y}
-                r={3.5}
-                className="fill-slate-950"
+                r={3}
+                className="fill-white"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.5"
               />
             );
           })

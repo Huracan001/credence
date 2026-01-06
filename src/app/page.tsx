@@ -65,57 +65,52 @@ export default async function Home() {
     : "Largest belief changes (low confidence)";
 
   return (
-    <div className="space-y-10">
-      <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900 to-slate-950 px-8 py-10 shadow-2xl shadow-sky-900/30">
-        <div className="flex flex-col gap-6">
-          <div className="inline-flex items-center gap-2 self-start rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-200">
-            Probabilistic crypto intelligence
+    <div className="space-y-16">
+      <section className="border-b border-[#e5e5e5] pb-12">
+        <div className="flex flex-col gap-8">
+          <div className="inline-flex items-center gap-2 self-start text-xs uppercase tracking-[0.15em] text-[#8e8e8e]">
+            Market evidence
           </div>
-          <div className="grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-semibold leading-tight text-white md:text-5xl">
-                Crypto, explained by the market — not hype.
+          <div className="grid gap-12 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+            <div className="space-y-6">
+              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-[#0f0f0f] md:text-5xl">
+                Evidence, not speculation.
               </h1>
-              <p className="text-lg text-slate-200">
-                Credence turns prediction market probabilities into calm,
-                explainable insights. No price targets, no recommendations—
-                just what the market currently believes and how sure it is.
+              <p className="text-lg leading-relaxed text-[#4a4a4a]">
+                AKASHI translates prediction market probabilities into clear, evidence-based insights. 
+                No forecasts, no recommendations—just what the market signals and how confident we can be.
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/markets"
-                  className="rounded-full bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
+                  className="bg-[#0f0f0f] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#4a4a4a]"
                 >
-                  View market dashboard
+                  View markets
                 </Link>
                 <Link
                   href="/trust"
-                  className="rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:border-sky-300 hover:text-sky-200"
+                  className="border border-[#e5e5e5] bg-white px-6 py-3 text-sm font-semibold text-[#0f0f0f] transition-colors hover:border-[#c92a2a] hover:text-[#c92a2a]"
                 >
-                  How we handle uncertainty
+                  Method
                 </Link>
               </div>
-              <p className="text-xs text-slate-300">
-                This platform provides informational analysis based on prediction
-                market data. It does not provide financial advice or investment
-                recommendations.
+              <p className="pt-2 text-xs text-[#8e8e8e]">
+                Informational analysis based on prediction market data. Not financial advice or investment recommendations.
               </p>
             </div>
-            <div className="glass-panel p-4">
-              <h2 className="text-sm uppercase tracking-wide text-slate-300">
-                How it works
+            <div className="glass-panel p-6">
+              <h2 className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e] mb-6">
+                Process
               </h2>
-              <ul className="mt-4 space-y-3 text-sm text-slate-100">
-                <li className="rounded-lg bg-white/5 px-3 py-2">
-                  We source event-focused probabilities from prediction markets.
+              <ul className="space-y-4 text-sm text-[#4a4a4a]">
+                <li className="border-l-2 border-[#e5e5e5] pl-4">
+                  Event-focused probabilities sourced from prediction markets.
                 </li>
-                <li className="rounded-lg bg-white/5 px-3 py-2">
-                  A guardrailed ElizaOS agent translates market moves into plain-language
-                  context after liquidity and confidence checks.
+                <li className="border-l-2 border-[#e5e5e5] pl-4">
+                  Market signals translated into clear context after liquidity and confidence validation.
                 </li>
-                <li className="rounded-lg bg-white/5 px-3 py-2">
-                  We highlight what changed, why it may have changed, and what is
-                  still uncertain—refusing to speculate when signals are thin.
+                <li className="border-l-2 border-[#e5e5e5] pl-4">
+                  Changes, context, and uncertainty presented with restraint—no speculation when signals are insufficient.
                 </li>
               </ul>
             </div>
@@ -123,30 +118,30 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">Featured markets</h2>
+      <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-[#e5e5e5] pb-3">
+            <h2 className="text-xl font-bold tracking-tight text-[#0f0f0f]">Markets</h2>
             <Link
               href="/markets"
-              className="text-sm text-sky-300 underline-offset-4 hover:underline"
+              className="text-sm text-[#8e8e8e] underline-offset-4 hover:text-[#0f0f0f] transition-colors"
             >
-              See all markets
+              View all
             </Link>
           </div>
           {hasMarkets ? (
             <div className="space-y-4">
               {featuredMarkets.map((market) => (
-                <div key={market.id} className="glass-panel p-5">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-2">
+                <div key={market.id} className="glass-panel p-6">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-3">
                       <Link
                         href={`/markets/${market.id}`}
-                        className="text-lg font-semibold text-white hover:text-sky-200"
+                        className="text-base font-semibold leading-snug text-[#0f0f0f] hover:text-[#c92a2a] transition-colors block"
                       >
                         {market.question}
                       </Link>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-[#8e8e8e]">
                         <ProbabilityBadge
                           probability={market.probability}
                           displayProbability={market.displayProbability}
@@ -169,8 +164,8 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-5 text-slate-200">
-              Live markets are temporarily unavailable. Data will reload automatically.
+            <div className="glass-panel p-6 text-[#8e8e8e]">
+              Markets temporarily unavailable. Data will reload automatically.
             </div>
           )}
         </div>

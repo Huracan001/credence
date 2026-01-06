@@ -39,10 +39,30 @@ function detectAssetId(question: string): string | null {
 
 const CRYPTO_KEYWORDS = [
   "crypto",
+  "cryptocurrency",
+  "bitcoin",
+  "btc",
+  "ethereum",
+  "eth",
   "blockchain",
   "token",
   "stablecoin",
   "defi",
+  "nft",
+  "solana",
+  "sol",
+  "cardano",
+  "ada",
+  "xrp",
+  "ripple",
+  "doge",
+  "dogecoin",
+  "bnb",
+  "binance",
+  "tether",
+  "usdt",
+  "usdc",
+  "usd coin",
   "etf",
 ];
 
@@ -62,36 +82,114 @@ const ECONOMY_KEYWORDS = [
   "unemployment",
   "treasury",
   "yield",
+  "monetary policy",
+  "fiscal",
+  "stimulus",
+  "quantitative easing",
+  "qe",
+  "stock market",
+  "s&p",
+  "dow",
+  "nasdaq",
 ];
 
-function isCryptoOrEconomyTopic(question: string, assetId?: string | null): boolean {
+const POLITICS_KEYWORDS = [
+  "election",
+  "president",
+  "presidential",
+  "congress",
+  "senate",
+  "house",
+  "senator",
+  "representative",
+  "governor",
+  "mayor",
+  "vote",
+  "voting",
+  "ballot",
+  "campaign",
+  "candidate",
+  "democrat",
+  "republican",
+  "party",
+  "political",
+  "politics",
+  "policy",
+  "legislation",
+  "bill",
+  "law",
+  "supreme court",
+  "scotus",
+  "impeachment",
+  "approval rating",
+  "poll",
+  "polling",
+];
+
+type CategoryPriority = "crypto" | "economy" | "politics" | "general";
+
+function getCategoryPriority(question: string, assetId?: string | null): CategoryPriority {
   const q = question.toLowerCase();
-  const hasAssetId = Boolean(assetId ?? detectAssetId(question));
-  const hasCryptoKeyword = CRYPTO_KEYWORDS.some((keyword) => q.includes(keyword));
-  const hasEconomyKeyword = ECONOMY_KEYWORDS.some((keyword) => q.includes(keyword));
-  return hasAssetId || hasCryptoKeyword || hasEconomyKeyword;
+  
+  // Check for crypto first (includes assetId detection)
+  if (assetId || detectAssetId(question)) return "crypto";
+  if (CRYPTO_KEYWORDS.some((keyword) => q.includes(keyword))) return "crypto";
+  
+  // Check for economy
+  if (ECONOMY_KEYWORDS.some((keyword) => q.includes(keyword))) return "economy";
+  
+  // Check for politics
+  if (POLITICS_KEYWORDS.some((keyword) => q.includes(keyword))) return "politics";
+  
+  return "general";
+}
+
+function getPriorityScore(category: CategoryPriority): number {
+  // Higher score = higher priority (appears first)
+  switch (category) {
+    case "crypto":
+      return 3;
+    case "economy":
+      return 2;
+    case "politics":
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 function prioritizeMarkets(markets: Market[]): Market[] {
   return [...markets].sort((a, b) => {
-    const aPriority = isCryptoOrEconomyTopic(a.question, a.assetId);
-    const bPriority = isCryptoOrEconomyTopic(b.question, b.assetId);
-    if (aPriority === bPriority) return 0;
-    return aPriority ? -1 : 1;
+    const aCategory = getCategoryPriority(a.question, a.assetId);
+    const bCategory = getCategoryPriority(b.question, b.assetId);
+    const aScore = getPriorityScore(aCategory);
+    const bScore = getPriorityScore(bCategory);
+    
+    // Higher score first
+    if (aScore !== bScore) return bScore - aScore;
+    
+    // If same priority category, maintain original order (or sort by volume)
+    return (b.volume ?? 0) - (a.volume ?? 0);
   });
 }
 
 function prioritizeShifts(shifts: BeliefShift[], markets: Market[]): BeliefShift[] {
-  const priorityByMarketId = new Map<string, boolean>();
+  const categoryByMarketId = new Map<string, CategoryPriority>();
   markets.forEach((market) =>
-    priorityByMarketId.set(market.id, isCryptoOrEconomyTopic(market.question, market.assetId)),
+    categoryByMarketId.set(market.id, getCategoryPriority(market.question, market.assetId)),
   );
 
   return [...shifts].sort((a, b) => {
-    const aPriority = priorityByMarketId.get(a.marketId) ?? false;
-    const bPriority = priorityByMarketId.get(b.marketId) ?? false;
-    if (aPriority === bPriority) return 0;
-    return aPriority ? -1 : 1;
+    const aCategory = categoryByMarketId.get(a.marketId) ?? "general";
+    const bCategory = categoryByMarketId.get(b.marketId) ?? "general";
+    const aScore = getPriorityScore(aCategory);
+    const bScore = getPriorityScore(bCategory);
+    
+    // Higher score first
+    if (aScore !== bScore) return bScore - aScore;
+    
+    // If same priority category, sort by absolute delta (larger moves first)
+    return Math.abs(b.delta) - Math.abs(a.delta);
   });
 }
 

@@ -39,11 +39,11 @@ export function ProbabilityBadge({
         : "low confidence";
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-100">
-      <span className="text-base font-semibold">
+    <div className="inline-flex items-center gap-3 border border-[#e5e5e5] bg-white px-4 py-2 text-xs font-medium">
+      <span className="text-base font-bold text-[#0f0f0f]">
         {pct} – {label}
       </span>
-      <span className="text-slate-300/80">{confCopy}</span>
+      <span className="text-[#8e8e8e] text-xs">{confCopy}</span>
     </div>
   );
 }

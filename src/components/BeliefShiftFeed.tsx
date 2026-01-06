@@ -37,53 +37,53 @@ export function BeliefShiftFeed({
 }) {
   return (
     <div className="glass-panel">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[#e5e5e5] px-6 py-4">
         <div>
-          <p className="text-sm uppercase tracking-wide text-slate-300">
-            Recent belief shifts
+          <p className="text-xs uppercase tracking-[0.15em] text-[#8e8e8e]">
+            Shifts
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#8e8e8e] mt-1">
             {subtitle}
           </p>
         </div>
-        <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">
-          Monitor uncertainty
+        <span className="px-3 py-1 text-xs font-medium text-[#4a4a4a] border border-[#e5e5e5]">
+          Monitor
         </span>
       </div>
       {shifts.length ? (
-        <ul className="divide-y divide-white/10">
+        <ul className="divide-y divide-[#e5e5e5]">
           {shifts.map((shift) => (
-            <li key={`${shift.marketId}-${shift.detectedAt}`} className="px-4 py-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <li key={`${shift.marketId}-${shift.detectedAt}`} className="px-6 py-5 transition-colors hover:bg-[#f5f4ef]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
                   <Link
                     href={`/markets/${shift.marketId}`}
-                    className="text-base font-semibold text-white hover:text-sky-200"
+                    className="text-base font-semibold leading-snug text-[#0f0f0f] hover:text-[#c92a2a] transition-colors block"
                   >
                     {shift.question}
                   </Link>
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-[#8e8e8e]">
                     <ChangeIndicator value={shift.delta} label="shift" />
-                    <span className="rounded-full bg-slate-800/70 px-2 py-1 text-[11px] uppercase tracking-wide text-slate-200">
+                    <span className="px-2 py-1 text-[11px] uppercase tracking-wide text-[#4a4a4a]">
                       {confidenceCopy[shift.confidence ?? "unknown"]}
                     </span>
-                    <span className="text-slate-400">
-                      Detected {formatTime(shift.detectedAt)}
+                    <span className="text-[#8e8e8e]">
+                      {formatTime(shift.detectedAt)}
                     </span>
                   </div>
                 </div>
                 <Link
                   href={`/markets/${shift.marketId}`}
-                  className="text-sm text-sky-300 underline-offset-4 hover:underline"
+                  className="text-sm text-[#c92a2a] underline-offset-4 hover:text-[#a61e1e] transition-colors self-start sm:self-center"
                 >
-                  View explanation
+                  View →
                 </Link>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <div className="px-4 py-4 text-sm text-slate-300">
+        <div className="px-6 py-6 text-sm text-[#8e8e8e]">
           {emptyMessage ?? "No shifts detected yet—waiting for movement."}
         </div>
       )}
