@@ -14,6 +14,15 @@ export const metadata: Metadata = {
   title: "AKASHI | Mission Control for Crypto Intelligence",
   description:
     "Real-time market probabilities decoded through ElizaOS. Evidence, not speculation.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +35,17 @@ export default function RootLayout({
       <body className={inter.variable}>
         <div className="min-h-screen">
           <TopNav />
+          <div className="border-b border-[#1a1f2e] bg-[#0a0a0f]/80 backdrop-blur-sm">
+            <div className="mx-auto w-full max-w-6xl px-6 py-3">
+              <div className="flex items-center justify-center gap-6 text-xs text-[#6b7280] uppercase tracking-wider">
+                <span>CA: coming soon</span>
+                <span className="text-[#1a1f2e]">•</span>
+                <a href="mailto:info@akashitech.xyz" className="text-[#00d9ff] hover:text-[#00b8d9] transition-colors">
+                  email: info@akashitech.xyz
+                </a>
+              </div>
+            </div>
+          </div>
           <main className="mx-auto w-full max-w-6xl px-6 pb-20 pt-12">
             {children}
           </main>
