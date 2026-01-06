@@ -21,7 +21,7 @@ import {
 } from "@/lib/metrics";
 
 const CACHE_KEY = "markets-latest";
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+const CACHE_TTL_MS = 1 * 60 * 1000; // 1 minute
 
 function detectAssetId(question: string): string | null {
   const q = question.toLowerCase();
